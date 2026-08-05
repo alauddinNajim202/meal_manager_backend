@@ -1,0 +1,249 @@
+/* Admin Panel Button Color Consistency */
+/* Matching Sidebar Blue Theme (#2563eb) */
+
+/* Primary Buttons */
+.btn-primary,
+.btn.btn-primary,
+button.btn-primary,
+a.btn-primary {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn.btn-primary:hover,
+.btn.btn-primary:focus,
+button.btn-primary:hover,
+button.btn-primary:focus,
+a.btn-primary:hover,
+a.btn-primary:focus {
+  background: #1e40af !important;
+  border-color: #1e40af !important;
+  color: #fff !important;
+}
+
+.btn-primary:active,
+.btn-primary.active,
+.btn.btn-primary:active,
+.btn.btn-primary.active {
+  background: #1e3a8a !important;
+  border-color: #1e3a8a !important;
+  color: #fff !important;
+}
+
+.btn-primary:disabled,
+.btn-primary.disabled,
+.btn.btn-primary:disabled,
+.btn.btn-primary.disabled {
+  background: rgba(37, 99, 235, 0.6) !important;
+  border-color: rgba(37, 99, 235, 0.6) !important;
+  color: #fff !important;
+}
+
+/* Outline Primary Buttons */
+.btn-outline-primary {
+  color: #2563eb !important;
+  border-color: #2563eb !important;
+  background-color: transparent !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+}
+
+/* Add Button Styling */
+.btn-add,
+.add-btn,
+button.btn-add,
+button.add-btn {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+.btn-add:hover,
+.add-btn:hover,
+button.btn-add:hover,
+button.add-btn:hover {
+  background: #1e40af !important;
+  border-color: #1e40af !important;
+}
+
+/* Submit Button Styling */
+.btn-submit,
+button[type="submit"],
+input[type="submit"] {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+button[type="submit"]:hover,
+input[type="submit"]:hover {
+  background: #1e40af !important;
+  border-color: #1e40af !important;
+}
+
+/* Buttons in Admin Tables */
+.table .btn-sm.btn-primary,
+.table .btn-sm.btn-add,
+.table .btn-sm.btn-success,
+.table .btn-sm.btn-info,
+.table .btn-sm.btn-danger,
+.table .btn-sm.btn-delete {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+}
+
+.table .btn-sm.btn-primary:hover,
+.table .btn-sm.btn-add:hover,
+.table .btn-sm.btn-success:hover,
+.table .btn-sm.btn-info:hover,
+.table .btn-sm.btn-danger:hover,
+.table .btn-sm.btn-delete:hover {
+  background: #1e40af !important;
+  border-color: #1e40af !important;
+}
+
+/* Form Control Focus */
+.form-control:focus,
+.form-select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25) !important;
+}
+
+/* Badge Primary */
+.badge-primary,
+.badge.badge-primary {
+  background-color: #2563eb !important;
+  color: #fff !important;
+}
+
+/* Alert Primary */
+.alert-primary {
+  background-color: rgba(37, 99, 235, 0.1) !important;
+  border-color: #2563eb !important;
+  color: #2563eb !important;
+}
+
+/* Progress Bar */
+.progress-bar,
+.progress-bar.bg-primary {
+  background-color: #2563eb !important;
+}
+
+/* Link Colors */
+a.text-primary {
+  color: #2563eb !important;
+}
+
+a.text-primary:hover {
+  color: #1e40af !important;
+}
+
+/* Pagination - Stylish but Simple */
+.pagination {
+  gap: 6px !important;
+  border: none !important;
+}
+
+.pagination .page-item {
+  margin: 0 !important;
+}
+
+.pagination .page-link {
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  color: #475569 !important; /* Slate color */
+  border-radius: 10px !important; /* Modern rounded corners */
+  padding: 8px 16px !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  background: #fff !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+}
+
+.pagination .page-link:hover {
+  background: rgba(37, 99, 235, 0.05) !important;
+  color: #2563eb !important;
+  border-color: #2563eb !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1) !important;
+}
+
+.pagination .page-item.active .page-link {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
+.pagination .page-item.disabled .page-link {
+  background: #f8fafc !important;
+  color: #cbd5e1 !important;
+  border-color: #f1f5f9 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link {
+  border-radius: 10px !important;
+}
+
+/* Custom Admin Button Classes - ALL match sidebar blue #2563eb */
+.btn-success,
+.btn-info,
+.btn-danger,
+.btn-delete,
+.btn-warning,
+.btn-secondary {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+}
+
+.btn-success:hover,
+.btn-info:hover,
+.btn-danger:hover,
+.btn-delete:hover,
+.btn-warning:hover,
+.btn-secondary:hover {
+  background: #1e40af !important;
+  border-color: #1e40af !important;
+}
+
+/* Edit button specific */
+.btn-edit,
+button.btn-edit,
+a.btn-edit {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+}
+
+/* Delete button specific */
+.btn-delete,
+button.btn-delete,
+a.btn-delete {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+}
+
+/* All buttons transition smoothly */
+.btn,
+button,
+a.btn {
+  transition: all 0.3s ease !important;
+}

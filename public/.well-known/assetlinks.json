@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.cryptaxApp",
+      "sha256_cert_fingerprints": [
+        "1F:4F:9E:0D:82:57:01:DD:6A:DA:52:C4:14:F6:F6:13:69:D0:6A:A2:6B:AF:88:47:84:69:2D:4B:95:8A:03:CD"
+      ]
+    }
+  }
+]
