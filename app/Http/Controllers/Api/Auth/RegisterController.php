@@ -7,17 +7,20 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Helpers\Helper;
 use App\Traits\SMS;
+use App\Traits\ApiResponse;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
+    use SMS, ApiResponse;
 
-    public $select;
-    use SMS;
+    protected array $select;
+
     public function __construct()
     {
         $this->select = ['id', 'name', 'email', 'otp', 'avatar'];
@@ -25,131 +28,122 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
-
-        $request->validate([
-            'name'          => 'required|string|max:100',
-            'password'      => 'required|string|min:6',
-            'phone'         => 'required|string|max:15|unique:users',
-
+        $validator = Validator::make($request->all(), [
+            'name'     => 'required|string|max:100',
+            'phone'    => 'required|string|max:15|unique:users',
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
-
-
-         if ($request->has('email') && User::where('email', $request->input('email'))->exists()) {
-            return Helper::jsonErrorResponse('Email already exists.', 422);
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
         }
 
-        // Check phone
-        if (User::where('phone', $request->input('phone'))->exists()) {
-            return Helper::jsonErrorResponse('Phone number already exists.', 422);
-        }
-
-        // try {
-        //     DB::beginTransaction();
-
+        try {
+            DB::beginTransaction();
 
             $user = User::create([
-                'name'           => $request->input('name'),
-                'slug'           => strtolower(Str::random(6)) . "-" . strtolower($request->input('name')),
-                'email'          => "user" . rand(1000, 9999) . "@example.com",
-                'phone'          => $request->input('phone'),
-                'password'       => Hash::make($request->input('password')),
-                'otp'            => rand(1000, 9999),
-                'otp_expires_at' => Carbon::now()->addMinutes(60*5),
-                'otp_verified_at'=> null,
-
+                'name'            => $request->name,
+                'slug'            => Str::slug($request->name) . '-' . uniqid(),
+                'email'           => 'user' . rand(1000, 9999) . '@example.com',
+                'phone'           => $request->phone,
+                'password'        => Hash::make($request->password),
+                'otp'             => rand(1000, 9999),
+                'otp_expires_at'  => now()->addMinutes(5),
+                'otp_verified_at' => null,
             ]);
 
+            // TODO: Send OTP via SMS to user's phone instead of email
+            // if (!empty($user->phone)) {
+            //     $this->bdSms($user->phone, "Your OTP is: {$user->otp}");
+            // }
 
-            // Send OTP via SMS to user's phone instead of email
-            if (!empty($user->phone)) {
-                $this->bdSms($user->phone, "Your OTP is: " . $user->otp);
-            }
+            DB::commit();
 
-            return response()->json([
-                'status'     => true,
-                'message'    => 'User register in successfully.',
-                'code'       => 200,
-                'data' => $user
-            ], 200);
+            return $this->success(null, 'User registered successfully. Please verify your phone number.', 200);
 
-        // } catch (Exception $e) {
-        //     DB::rollBack();
-        //     return Helper::jsonErrorResponse('User registration failed', 500, [$e->getMessage()]);
-        // }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return Helper::jsonErrorResponse('User registration failed', 500, [$e->getMessage()]);
+        }
     }
+
     public function VerifyPhone(Request $request)
     {
-
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'phone' => 'required|string|exists:users,phone',
             'otp'   => 'required|digits:4',
         ]);
-        // try {
-            $user = User::where('phone', $request->input('phone'))->first();
 
-            //! Check if phone has already been verified
-            if (!empty($user->otp_verified_at)) {
-                return  Helper::jsonErrorResponse('Phone already verified.', 409);
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
+
+        try {
+            $user = User::where('phone', $request->phone)->first();
+
+            if ($user->otp_verified_at) {
+                return $this->error(null, 'Phone already verified.', 409);
             }
 
-            if ((string)$user->otp !== (string)$request->input('otp')) {
-                return Helper::jsonErrorResponse('Invalid OTP code', 422);
+            if ((string) $user->otp !== (string) $request->otp) {
+                return $this->error(null, 'Invalid OTP code', 422);
             }
 
-            //* Check if OTP has expired
             if (Carbon::parse($user->otp_expires_at)->isPast()) {
-                return Helper::jsonErrorResponse('OTP has expired. Please request a new OTP.', 422);
+                return $this->error(null, 'OTP has expired. Please request a new OTP.', 422);
             }
 
-            //* Verify the phone
-            $user->otp_verified_at   = now();
-            $user->otp               = null;
-            $user->otp_expires_at    = null;
-            $user->save();
+            $user->update([
+                'otp_verified_at' => now(),
+                'otp'             => null,
+                'otp_expires_at'  => null,
+            ]);
 
             $token = auth('api')->login($user);
 
-            return Helper::jsonResponse(true, 'Phone verified successfully', 200, [
+            return $this->success([
                 'token_type' => 'bearer',
-                'token' => $token,
+                'token'      => $token,
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
-                'data' => auth('api')->user()
-            ]);
-        // } catch (Exception $e) {
-        //     return Helper::jsonErrorResponse($e->getMessage(), $e->getCode());
-        // }
+                'data'       => auth('api')->user()
+            ], 'Phone verified successfully', 200);
+
+        } catch (Exception $e) {
+            return Helper::jsonErrorResponse($e->getMessage(), $e->getCode() ?: 500);
+        }
     }
 
     public function ResendOtp(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'phone' => 'required|string|exists:users,phone',
         ]);
 
-        try {
-            $user = User::where('phone', $request->input('phone'))->first();
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
 
-            if (!$user) {
-                return Helper::jsonErrorResponse('User not found.', 404);
-            }
+        try {
+            $user = User::where('phone', $request->phone)->first();
 
             if ($user->otp_verified_at) {
-                return Helper::jsonErrorResponse('Phone already verified.', 409);
+                return $this->error(null, 'Phone already verified.', 409);
             }
 
-            $newOtp               = rand(1000, 9999);
-            $otpExpiresAt         = Carbon::now()->addMinutes(60*5);
-            $user->otp            = $newOtp;
-            $user->otp_expires_at = $otpExpiresAt;
-            $user->save();
+            $newOtp = rand(1000, 9999);
+            
+            $user->update([
+                'otp'            => $newOtp,
+                'otp_expires_at' => now()->addMinutes(5),
+            ]);
 
-            //* Send the new OTP to the user's phone
-            $this->bdSms($user->phone, "Your OTP is: " . $newOtp);
+            // TODO: Send the new OTP to the user's phone
+            // $this->bdSms($user->phone, "Your OTP is: {$newOtp}");
 
-            return Helper::jsonResponse(true, 'A new OTP has been sent to your phone.', 200);
+            return $this->success($user, 'A new OTP has been sent to your phone.', 200);
+
         } catch (Exception $e) {
-            return Helper::jsonErrorResponse($e->getMessage(), 200);
+            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
         }
     }
 }
