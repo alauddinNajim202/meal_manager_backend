@@ -74,7 +74,7 @@ class LoginController extends Controller
                 'token_type' => 'bearer',
                 'token'      => $token,
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
-                'data'       => auth('api')->user()
+                'data'       => $data,
             ], 'Login successful', 200);
 
         } catch (ValidationException $e) {
