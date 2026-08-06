@@ -59,7 +59,7 @@ class RegisterController extends Controller
 
             DB::commit();
 
-            return $this->success(null, 'User registered successfully. Please verify your phone number.', 200);
+            return $this->success($user, 'User registered successfully. Please verify your phone number.', 200);
 
         } catch (Exception $e) {
             DB::rollBack();
