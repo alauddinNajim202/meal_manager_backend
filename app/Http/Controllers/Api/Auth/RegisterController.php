@@ -23,7 +23,7 @@ class RegisterController extends Controller
 
     public function __construct()
     {
-        $this->select = ['id', 'name', 'email', 'otp', 'avatar'];
+        $this->select = ['id', 'name', 'email','phone', 'otp', 'avatar'];
     }
 
     public function register(Request $request)
