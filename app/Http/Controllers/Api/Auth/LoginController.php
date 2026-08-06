@@ -92,7 +92,7 @@ class LoginController extends Controller
         $refreshToken = auth('api')->refresh();
 
         if (empty($refreshToken)) {
-            return Helper::jsonErrorResponse('Failed to refresh the token.', 401);
+            return $this->error(null, 'Failed to refresh the token.', 401);
         }
 
         return response()->json([

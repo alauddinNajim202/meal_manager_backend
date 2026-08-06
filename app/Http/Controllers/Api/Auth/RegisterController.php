@@ -105,7 +105,7 @@ class RegisterController extends Controller
                 'token_type' => 'bearer',
                 'token'      => $token,
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
-                'data'       => auth('api')->user()
+                'data'       => $user
             ], 'Phone verified successfully', 200);
 
         } catch (Exception $e) {
