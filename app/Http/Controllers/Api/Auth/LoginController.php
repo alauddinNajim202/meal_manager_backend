@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
+use App\Traits\ApiResponse;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ use Throwable;
 class LoginController extends Controller
 {
     public $select;
+    use ApiResponse;
     public function __construct()
     {
         parent::__construct();
@@ -28,7 +30,7 @@ class LoginController extends Controller
     public function Login(Request $request)
     {
         try {
-           $request->validate([
+           $validator = Validator::make($request->all(), [
                'phone'    => 'required|exists:users,phone',
                'password' => 'required|string|min:6',
            ]);
@@ -36,28 +38,19 @@ class LoginController extends Controller
 
             $user = User::where('phone', $request->phone)->first();
 
-             
-            if ($user && $user->firebaseTokens) {
-                $notifyData = ['title' => "Payment Failed", 'body'  => "test body", 'icon'  => config('settings.logo')];
-                foreach ($user->firebaseTokens as $firebaseToken) {
-                    Helper::sendNotifyMobile($firebaseToken->token, $notifyData);
-                }
-            }
-
-
-
+        
             if (!$user) {
-                return Helper::jsonResponse(false, 'user is not active', 404);
+                return $this->error(null, 'user is not active', 404);
             }
 
             //! Check the password
             if (!Hash::check($request->password, $user->password)) {
-                return Helper::jsonResponse(false, 'Invalid password', 401);
+                return $this->error(null, 'Invalid password', 401);
             }
 
             //? Check if the email is verified before login is successful
             if (!$user->otp_verified_at) {
-                return Helper::jsonResponse(false, 'Email not verified. Please verify your email before logging in.', 403, ['is_otp_verified' => $user->isOtpVerified]);
+                return $this->error(null, 'Phone number not verified. Please verify your phone number before logging in.', 403);
             }else{
                 $user->update([
                     'otp'            => null,
@@ -77,26 +70,20 @@ class LoginController extends Controller
             $data = User::select($this->select)->find(auth('api')->user()->id);
 
 
-            return response()->json([
-                'status'     => true,
-                'message'    => 'Login successful',
-                'code'       => 200,
-                'expires_in' => auth('api')->factory()->getTTL(),
+            return $this->success([
+                'token_type' => 'bearer',
                 'token'      => $token,
-                'data'       => $data,
-            ], 200);
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
+                'data'       => auth('api')->user()
+            ], 'Login successful', 200);
 
         } catch (ValidationException $e) {
-            DB::rollBack();
 
-            return Helper::jsonErrorResponse($e->errors(), 422,$e->getMessage());
+
+            return $this->error(null, 'Validation failed', 422);
         } catch (Throwable $e) {
-            DB::rollBack();
 
-            return Helper::jsonErrorResponse(
-                config('app.debug') ? $e->getMessage() : 'Internal server error',
-                500
-            );
+            return $this->error(null, 'Internal server error', 500);
         }
     }
 
