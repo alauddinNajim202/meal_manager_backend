@@ -59,7 +59,7 @@ class RegisterController extends Controller
 
             DB::commit();
 
-            return $this->success($user, 'User registered successfully. Please verify your phone number.', 200);
+            return $this->success($user->only($this->select), 'User registered successfully. Please verify your phone number.', 200);
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -100,12 +100,16 @@ class RegisterController extends Controller
             ]);
 
             $token = auth('api')->login($user);
+            
+
+
+
 
             return $this->success([
                 'token_type' => 'bearer',
                 'token'      => $token,
                 'expires_in' => auth('api')->factory()->getTTL() * 60,
-                'data'       => $user
+                'data'       => $user->only($this->select)
             ], 'Phone verified successfully', 200);
 
         } catch (Exception $e) {
@@ -140,7 +144,7 @@ class RegisterController extends Controller
             // TODO: Send the new OTP to the user's phone
             // $this->bdSms($user->phone, "Your OTP is: {$newOtp}");
 
-            return $this->success($user, 'A new OTP has been sent to your phone.', 200);
+            return $this->success($user->only($this->select), 'A new OTP has been sent to your phone.', 200);
 
         } catch (Exception $e) {
             return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
