@@ -28,7 +28,7 @@ class MessController extends Controller
                 'name' => $mess->name,
                 'address' => $mess->address,
                 'image' => $mess->image,
-                'role' => $mess->pivot->role,
+                'role' => $mess->pivot->role == "manager" ? "owner" : $mess->pivot->role,
                 'is_current' => $mess->id == $user->current_mess_id,
                 // 'pivot' => $mess->pivot,
             ];
