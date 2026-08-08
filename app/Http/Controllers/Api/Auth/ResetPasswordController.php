@@ -45,9 +45,7 @@ class ResetPasswordController extends Controller
                 'otp_expires_at' => now()->addMinutes(60),
             ]);
 
-            return $this->success([
-                'user' => $user
-            ], 'OTP sent to your phone.', 200);
+            return $this->success($user->only($this->select), 'OTP sent to your phone.', 200);
 
         } catch (Exception $e) {
             return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
@@ -85,10 +83,7 @@ class ResetPasswordController extends Controller
                 'reset_password_token_expire_at' => now()->addHour(),
             ]);
 
-            return $this->success([
-                'token' => $token,
-                'user'  => $user
-            ], 'OTP verified successfully.', 200);
+            return $this->success($user->only($this->select), 'OTP verified successfully.', 200);
 
         } catch (Exception $e) {
             return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);

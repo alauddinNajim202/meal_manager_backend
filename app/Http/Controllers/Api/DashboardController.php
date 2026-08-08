@@ -2,69 +2,63 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\User;
 use App\Models\Meal;
+use App\Models\Mess;
 use App\Models\Expense;
 use App\Models\Deposit;
 use Carbon\Carbon;
+use App\Traits\ApiResponse;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class DashboardController extends Controller
 {
+    use ApiResponse;
+
     public function index(Request $request)
     {
         $user = auth()->user();
-        if (!$user || !$user->mess_id) {
-            return response()->json(['message' => 'No mess associated'], 400);
+
+        if (!$user->current_mess_id) {
+            return $this->error(null, 'No active mess selected.', 400);
         }
 
-        $messId = $user->mess_id;
-        $month = $request->month ?? Carbon::now()->month;
-        $year = $request->year ?? Carbon::now()->year;
+        $messId = $user->current_mess_id;
+        $month  = $request->month ?? Carbon::now()->month;
+        $year   = $request->year  ?? Carbon::now()->year;
 
-        // Total Members
-        $totalMembers = User::where('mess_id', $messId)->count();
+        $mess = Mess::find($messId);
+
+        // Total Members (via pivot)
+        $totalMembers = $mess->users()->count();
 
         // Today's Total Meals
-        $todayMeals = Meal::where('mess_id', $messId)
-            ->whereDate('date', Carbon::today())
-            ->get();
+        $todayMeals      = Meal::where('mess_id', $messId)->whereDate('date', Carbon::today())->get();
         $totalTodayMeals = $todayMeals->sum('breakfast') + $todayMeals->sum('lunch') + $todayMeals->sum('dinner');
 
-        // This Month's Total Expenses
+        // This Month's Totals
         $totalExpenses = Expense::where('mess_id', $messId)
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->sum('amount');
+            ->whereMonth('date', $month)->whereYear('date', $year)->sum('amount');
 
-        // This Month's Total Deposits
         $totalDeposits = Deposit::where('mess_id', $messId)
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->sum('amount');
+            ->whereMonth('date', $month)->whereYear('date', $year)->sum('amount');
 
-        // Total Meals this Month
-        $monthMeals = Meal::where('mess_id', $messId)
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->get();
+        $monthMeals      = Meal::where('mess_id', $messId)
+            ->whereMonth('date', $month)->whereYear('date', $year)->get();
         $totalMonthMeals = $monthMeals->sum('breakfast') + $monthMeals->sum('lunch') + $monthMeals->sum('dinner');
 
         // Current Meal Rate
         $mealRate = $totalMonthMeals > 0 ? round($totalExpenses / $totalMonthMeals, 2) : 0;
 
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                'total_members' => $totalMembers,
-                'today_meals' => $totalTodayMeals,
-                'monthly_expenses' => $totalExpenses,
-                'monthly_deposits' => $totalDeposits,
-                'monthly_total_meals' => $totalMonthMeals,
-                'current_meal_rate' => $mealRate,
-            ]
-        ]);
+        return $this->success([
+            'mess'                => ['id' => $mess->id, 'name' => $mess->name],
+            'total_members'       => $totalMembers,
+            'today_meals'         => $totalTodayMeals,
+            'monthly_expenses'    => $totalExpenses,
+            'monthly_deposits'    => $totalDeposits,
+            'monthly_total_meals' => $totalMonthMeals,
+            'current_meal_rate'   => $mealRate,
+        ], 'Dashboard data fetched', 200);
     }
 }
+

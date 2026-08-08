@@ -172,6 +172,39 @@ class User extends Authenticatable implements JWTSubject
     }
 
 
+    // =====================
+    // Mess Relationships
+    // =====================
+
+    /**
+     * All messes this user belongs to (as manager or member).
+     */
+    public function messes()
+    {
+        return $this->belongsToMany(Mess::class, 'mess_user')
+            ->withPivot('role', 'status')
+            ->withTimestamps();
+    }
+
+    /**
+     * The currently active mess the user is viewing.
+     */
+    public function currentMess()
+    {
+        return $this->belongsTo(Mess::class, 'current_mess_id');
+    }
+
+    /**
+     * Messes where the user is a manager.
+     */
+    public function managedMesses()
+    {
+        return $this->belongsToMany(Mess::class, 'mess_user')
+            ->wherePivot('role', 'manager')
+            ->withPivot('role', 'status')
+            ->withTimestamps();
+    }
+
     public function properties()
     {
         return $this->hasMany(Property::class);

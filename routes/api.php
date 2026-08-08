@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\Frontend\SubcategoryController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\FavouriteController;
+use App\Http\Controllers\Api\Frontend\MessController;
 
 //page
 Route::get('/page/home', [HomeController::class, 'index']);
@@ -181,6 +182,24 @@ use App\Http\Controllers\Api\FoodScannerController;
 
 // Ojais Wellness Food Scanning
 Route::post('/scan-food', [FoodScannerController::class, 'scan']);
+
+// =====================
+// Mess Management Routes
+// =====================
+use App\Http\Controllers\Api\MemberController;
+
+Route::middleware(['auth:api'])->prefix('mess')->group(function () {
+    Route::get('/list', [MessController::class, 'index']);          // GET  /api/mess/list
+    Route::post('/create', [MessController::class, 'create']);      // POST /api/mess/create
+    Route::post('/switch', [MessController::class, 'switchMess']);  // POST /api/mess/switch
+    Route::post('/leave', [MessController::class, 'leave']);        // POST /api/mess/leave
+
+    // Member Management
+    Route::get('/members', [MemberController::class, 'index']);              // GET  /api/mess/members
+    Route::post('/members', [MemberController::class, 'store']);             // POST /api/mess/members
+    Route::delete('/members/{id}', [MemberController::class, 'destroy']);    // DELETE /api/mess/members/{id}
+    Route::patch('/members/{id}/role', [MemberController::class, 'changeRole']); // PATCH /api/mess/members/{id}/role
+});
 
 Route::get('/create-admin', function () {
 

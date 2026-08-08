@@ -2,35 +2,57 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
+use Exception;
 use App\Models\Meal;
+use App\Models\User;
+use App\Traits\ApiResponse;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 
 class MealController extends Controller
 {
+    use ApiResponse;
+
     /**
-     * Display a listing of the meals for a specific month and year.
+     * List meals for the current active mess filtered by month & year.
      */
     public function index(Request $request)
     {
         $user = auth()->user();
-        
-        $request->validate([
+
+        if (!$user->current_mess_id) {
+            return $this->error(null, 'No active mess selected.', 400);
+        }
+
+        $validator = Validator::make($request->all(), [
             'month' => 'required|integer|min:1|max:12',
-            'year' => 'required|integer'
+            'year'  => 'required|integer',
         ]);
 
-        $meals = Meal::where('mess_id', $user->mess_id)
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
+
+        $meals = Meal::where('mess_id', $user->current_mess_id)
             ->whereMonth('date', $request->month)
             ->whereYear('date', $request->year)
-            ->with('user:id,name,image')
-            ->get();
+            ->with('user:id,name,avatar')
+            ->get()
+            ->map(function ($meal) {
+                return [
+                    'id'        => $meal->id,
+                    'user'      => $meal->user,
+                    'date'      => $meal->date,
+                    'breakfast' => $meal->breakfast,
+                    'lunch'     => $meal->lunch,
+                    'dinner'    => $meal->dinner,
+                    'total'     => $meal->total,
+                    'is_guest'  => $meal->is_guest,
+                ];
+            });
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $meals
-        ]);
+        return $this->success($meals, 'Meals fetched successfully', 200);
     }
 
     /**
@@ -39,41 +61,54 @@ class MealController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'date' => 'required|date',
-            'breakfast' => 'required|numeric|min:0',
-            'lunch' => 'required|numeric|min:0',
-            'dinner' => 'required|numeric|min:0',
-            'is_guest' => 'boolean'
-        ]);
 
-        // Check if the user belongs to the same mess
-        $targetUser = \App\Models\User::find($request->user_id);
-        if ($targetUser->mess_id !== $user->mess_id) {
-            return response()->json(['message' => 'User does not belong to your mess'], 403);
+        if (!$user->current_mess_id) {
+            return $this->error(null, 'No active mess selected.', 400);
         }
 
-        $meal = Meal::updateOrCreate(
-            [
-                'user_id' => $request->user_id,
-                'mess_id' => $user->mess_id,
-                'date' => $request->date,
-            ],
-            [
-                'breakfast' => $request->breakfast,
-                'lunch' => $request->lunch,
-                'dinner' => $request->dinner,
-                'is_guest' => $request->is_guest ?? false,
-            ]
-        );
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Meal saved successfully',
-            'data' => $meal
+        $validator = Validator::make($request->all(), [
+            'user_id'   => 'required|exists:users,id',
+            'date'      => 'required|date',
+            'breakfast' => 'required|numeric|min:0',
+            'lunch'     => 'required|numeric|min:0',
+            'dinner'    => 'required|numeric|min:0',
+            'is_guest'  => 'boolean',
         ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
+
+        try {
+            $messId = $user->current_mess_id;
+
+            // Verify the target user belongs to the same mess via pivot table
+            $targetUser = User::findOrFail($request->user_id);
+            $belongsToMess = $targetUser->messes()->where('mess_id', $messId)->exists();
+
+            if (!$belongsToMess) {
+                return $this->error(null, 'This user does not belong to your mess.', 403);
+            }
+
+            $meal = Meal::updateOrCreate(
+                [
+                    'user_id' => $request->user_id,
+                    'mess_id' => $messId,
+                    'date'    => $request->date,
+                ],
+                [
+                    'breakfast' => $request->breakfast,
+                    'lunch'     => $request->lunch,
+                    'dinner'    => $request->dinner,
+                    'is_guest'  => $request->is_guest ?? false,
+                ]
+            );
+
+            return $this->success($meal, 'Meal saved successfully', 200);
+
+        } catch (Exception $e) {
+            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+        }
     }
 
     /**
@@ -82,13 +117,19 @@ class MealController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
-        $meal = Meal::where('id', $id)->where('mess_id', $user->mess_id)->firstOrFail();
-        
-        $meal->delete();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Meal deleted successfully'
-        ]);
+        try {
+            $meal = Meal::where('id', $id)
+                ->where('mess_id', $user->current_mess_id)
+                ->firstOrFail();
+
+            $meal->delete();
+
+            return $this->success(null, 'Meal deleted successfully', 200);
+
+        } catch (Exception $e) {
+            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+        }
     }
 }
+
