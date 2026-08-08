@@ -20,7 +20,7 @@ class ResetPasswordController extends Controller
 
     public function __construct()
     {
-        $this->select = ['id', 'name', 'email', 'otp', 'avatar', 'otp_verified_at', 'last_activity_at'];
+        $this->select = ['id', 'name', 'email', 'otp', 'avatar','token', 'otp_verified_at', 'last_activity_at'];
     }
 
     public function forgotPassword(Request $request)
