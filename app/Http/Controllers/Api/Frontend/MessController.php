@@ -19,15 +19,17 @@ class MessController extends Controller
      */
     public function index()
     {
-        $user   = auth()->user();
+        $user   = auth('api')->user();
         $messes = $user->messes()->get();
 
-        $data = $messes->map(function ($mess) {
+        $data = $messes->map(function ($mess) use ($user) {
             return [
                 'id' => $mess->id,
                 'name' => $mess->name,
                 'address' => $mess->address,
                 'image' => $mess->image,
+                'role' => $mess->pivot->role,
+                'is_current' => $mess->id == $user->current_mess_id,
                 // 'pivot' => $mess->pivot,
             ];
         });
