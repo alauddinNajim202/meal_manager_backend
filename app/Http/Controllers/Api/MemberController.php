@@ -79,8 +79,8 @@ class MemberController extends Controller
             return $this->error($validator->errors()->first(), 'Validation failed', 422);
         }
 
-        // try {
-        //     DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
             $messId = $authUser->current_mess_id;
 
@@ -153,12 +153,12 @@ class MemberController extends Controller
                 'role'                    => 'member',
                 'status'                  => 'active',
             ];
-        //     DB::commit();
+            DB::commit();
 
-        //     return $this->success($data, 'Member added successfully', 201);
+            return $this->success($data, 'Member added successfully', 201);
 
-        // } catch (Exception $e) {
-        //     DB::rollBack();
+        } catch (Exception $e) {
+            DB::rollBack();
             return $this->error(null, $e->getMessage(), 500);
         }
     }
