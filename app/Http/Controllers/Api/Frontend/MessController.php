@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Frontend;
 
 use Exception;
 use App\Models\Mess;
+use App\Helpers\Helper;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,20 +14,30 @@ use Illuminate\Support\Facades\Validator;
 class MessController extends Controller
 {
     use ApiResponse;
-
     /**
      * List all messes the authenticated user belongs to.
      */
     public function index()
     {
-        try {
-            $user = auth()->user();
-            $messes = $user->messes()->withPivot('role', 'status')->get();
+        $user   = auth()->user();
+        $messes = $user->messes()->get();
 
-            return $this->success($messes, 'Mess list', 200);
-        } catch (Exception $e) {
-            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
-        }
+        $data = $messes->map(function ($mess) {
+            return [
+                'id' => $mess->id,
+                'name' => $mess->name,
+                'address' => $mess->address,
+                'image' => $mess->image,
+                // 'pivot' => $mess->pivot,
+            ];
+        });
+
+
+
+
+        
+
+        return $this->success($data, 'Mess list retrieved successfully', 200);
     }
 
     /**
@@ -54,7 +65,7 @@ class MessController extends Controller
             $mess = Mess::create([
                 'name'    => $request->name,
                 'address' => $request->address,
-                'image' => Helper::uploadImage($request, 'image', 'messes'),
+                'image' => $request->hasFile('image') ? Helper::fileUpload($request->image, 'messes', $request->name) : null,
             ]);
 
             // Attach the creator as manager in the pivot table

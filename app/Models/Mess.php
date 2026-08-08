@@ -3,17 +3,31 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Mess extends Model
 {
-    use SoftDeletes;
-
+   
     protected $fillable = [
         'name',
         'address',
         'image',
     ];
+
+     public function getImageAttribute($value): string|null
+    {
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+        if (request()->is('api/*') && !empty($value)) {
+            return url($value);
+        }
+
+        return $value;
+    }
+
+
+
+
 
     /**
      * All users belonging to this mess (manager + members).
