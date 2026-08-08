@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use Exception;
 use App\Models\User;
 use App\Models\Mess;
+use App\Helpers\Helper;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ class MemberController extends Controller
      */
     public function index()
     {
-        $user = auth()->user();
+        $user = auth('api')->user();
 
         if (!$user->current_mess_id) {
             return $this->error(null, 'No active mess selected.', 400);
@@ -50,16 +51,28 @@ class MemberController extends Controller
      */
     public function store(Request $request)
     {
-        $authUser = auth()->user();
+        $authUser = auth('api')->user();
 
         if (!$this->isManagerOfCurrentMess($authUser)) {
             return $this->error(null, 'Only managers can add members.', 403);
         }
 
         $validator = Validator::make($request->all(), [
+            'name'     => 'required|string|max:100',
             'phone'    => 'required|string|max:15',
-            'name'     => 'required_if:phone,null|string|max:100',
-            'password' => 'nullable|string|min:6',
+            'email'    => 'nullable|email',
+            'nid'      => 'nullable|string|max:100',
+            'nid_front'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'nid_back'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'avatar'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'emergency_contact_phone' => 'nullable|string|max:100',
+            'advance_amount' => 'nullable|numeric',
+            'month' => 'nullable|string|max:100',
+            'joining_date' => 'nullable',
+            'room_rent' => 'nullable|numeric',
+            'notes' => 'nullable|string|max:255',
+            
+
         ]);
 
         if ($validator->fails()) {
@@ -82,21 +95,39 @@ class MemberController extends Controller
                 }
             } else {
                 // Create a new user account
+                $email = $request->email ?? $request->name . rand(1000, 9999) . '@gmail.com';
+
+                if (User::where('email', $email)->exists()) {
+                    $email = $request->name . rand(1000, 9999) . '@gmail.com';
+                }
+
                 $member = User::create([
-                    'name'            => $request->name,
-                    'phone'           => $request->phone,
-                    'slug'            => str()->slug($request->name) . '-' . uniqid(),
-                    'email'           => 'user' . rand(1000, 9999) . '@example.com',
-                    'password'        => Hash::make($request->password ?? str()->random(10)),
-                    'otp'             => rand(1000, 9999),
-                    'otp_expires_at'  => now()->addMinutes(5),
+                    'name'                    => $request->name,
+                    'phone'                   => $request->phone,
+                    'slug'                    => str()->slug($request->name) . '-' . uniqid(),
+                    'email'                   => $email,
+                    'avatar'                  => $request->avatar ? Helper::fileUpload($request->avatar, 'users', $request->name) : null,
+                    'password'                => Hash::make(str()->random(10)),
+                    
                 ]);
             }
 
+            $nidFrontPath = $request->nid_front ? Helper::fileUpload($request->nid_front, 'users/nid', $request->name . '-front') : null;
+            $nidBackPath  = $request->nid_back ? Helper::fileUpload($request->nid_back, 'users/nid', $request->name . '-back') : null;
+
             // Attach user to this mess as a member via pivot table
             $member->messes()->attach($messId, [
-                'role'   => 'member',
-                'status' => 'active',
+                'role'           => 'member',
+                'status'         => 'active',
+                'nid'            => $request->nid,
+                'nid_front'      => $nidFrontPath,
+                'nid_back'       => $nidBackPath,
+                'emergency_contact_phone' => $request->emergency_contact_phone,
+                'advance_amount' => $request->advance_amount,
+                'month'          => $request->month,
+                'joining_date'   => $request->joining_date,
+                'room_rent'      => $request->room_rent,
+                'notes'          => $request->notes,
             ]);
 
             // If the member has no active mess, set this as their current mess
@@ -104,20 +135,34 @@ class MemberController extends Controller
                 $member->update(['current_mess_id' => $messId]);
             }
 
+            $data = [
+                'id'                      => $member->id,
+                'name'                    => $member->name,
+                'phone'                   => $member->phone,
+                'avatar'                  => $member->avatar,
+                'email'                   => $member->email,
+                'nid'                     => $request->nid,
+                'nid_front'               => $nidFrontPath,
+                'nid_back'                => $nidBackPath,
+                'emergency_contact_phone' => $request->emergency_contact_phone,
+                'advance_amount'          => $request->advance_amount,
+                'month'                   => $request->month,
+                'joining_date'            => $request->joining_date,
+                'room_rent'               => $request->room_rent,
+                'notes'                   => $request->notes,
+                'role'                    => 'member',
+                'status'                  => 'active',
+            ];
             DB::commit();
 
-            return $this->success([
-                'id'    => $member->id,
-                'name'  => $member->name,
-                'phone' => $member->phone,
-                'role'  => 'member',
-            ], 'Member added successfully', 201);
+            return $this->success($data, 'Member added successfully', 201);
 
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+            return $this->error(null, $e->getMessage(), 500);
         }
     }
+
 
     /**
      * Remove a member from the current active mess.

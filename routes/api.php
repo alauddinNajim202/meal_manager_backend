@@ -195,8 +195,8 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::post('/leave', [MessController::class, 'leave']);        // POST /api/mess/leave
 
     // Member Management
-    Route::get('/members', [MemberController::class, 'index']);              // GET  /api/mess/members
-    Route::post('/members', [MemberController::class, 'store']);             // POST /api/mess/members
+    Route::get('/members/list', [MemberController::class, 'index']);              // GET  /api/mess/members
+    Route::post('/members/store', [MemberController::class, 'store']);             // POST /api/mess/members
     Route::delete('/members/{id}', [MemberController::class, 'destroy']);    // DELETE /api/mess/members/{id}
     Route::patch('/members/{id}/role', [MemberController::class, 'changeRole']); // PATCH /api/mess/members/{id}/role
 });
