@@ -24,4 +24,6 @@ class Deposit extends Model
     {
         return $this->belongsTo(Mess::class);
     }
+
+    
 }

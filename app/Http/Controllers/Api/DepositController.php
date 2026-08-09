@@ -47,7 +47,7 @@ class DepositController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'amount'  => 'required|numeric|min:0',
-            'date'    => 'required',
+            'date'    => 'required|date',
             'method'  => 'nullable|string',
             'note'    => 'nullable|string',
         ]);
@@ -61,7 +61,7 @@ class DepositController extends Controller
                 'mess_id' => $user->current_mess_id,
                 'user_id' => $request->user_id,
                 'amount'  => $request->amount,
-                'date'    => $request->date,
+                'date'    => $request->date ?? now(),
                 'method'  => $request->method,
                 'note'    => $request->note,
             ]);
@@ -69,7 +69,7 @@ class DepositController extends Controller
             return $this->success($deposit, 'Deposit added successfully', 201);
 
         } catch (Exception $e) {
-            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+            return $this->error(null, $e->getMessage(),500);
         }
     }
 

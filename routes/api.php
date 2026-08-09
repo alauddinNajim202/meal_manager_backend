@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\FavouriteController;
 use App\Http\Controllers\Api\Frontend\MessController;
+use App\Http\Controllers\Api\Frontend\TransactionController;
 
 //page
 Route::get('/page/home', [HomeController::class, 'index']);
@@ -189,4 +190,9 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::get('/reports', [ReportController::class, 'index']);
     Route::get('/reports/my-bill', [ReportController::class, 'myBill']);
     Route::post('/reports/generate', [ReportController::class, 'generate']);
+
+
+    Route::get('/transactions', [TransactionController::class, 'index']);
+
+
 });

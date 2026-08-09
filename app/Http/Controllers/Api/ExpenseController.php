@@ -39,29 +39,30 @@ class ExpenseController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'user_id'     => 'required|exists:users,id',
+            'reason'      => 'required|string',
             'amount'      => 'required|numeric|min:0',
-            'date'        => 'required|date',
+            'date'        => 'required|string',
             'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
-            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+            return $this->error(null, $validator->errors()->first(), 422);
         }
 
         try {
             $expense = Expense::create([
                 'mess_id'     => $user->current_mess_id,
-                'user_id'     => $request->user_id,
+                'user_id'     => $user->id,
                 'amount'      => $request->amount,
-                'date'        => $request->date,
+                'reason'      => $request->reason,
+                'date'        => $request->date ?? now(),
                 'description' => $request->description,
             ]);
 
             return $this->success($expense, 'Expense added successfully', 201);
 
         } catch (Exception $e) {
-            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+            return $this->error(null, $e->getMessage(), 500);
         }
     }
 
