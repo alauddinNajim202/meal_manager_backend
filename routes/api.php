@@ -43,45 +43,13 @@ Route::get('/property-form-data', [PropertyController::class, 'getFormData']);
 
 Route::get('/location/list', [HomeController::class, 'divisions']);
 
-// facility
-Route::get('/facility/list', [HomeController::class, 'facilities']);
 
 
-Route::get('/property/list', [HomeController::class, 'propertyList']);
-Route::get('/property/details/{id}', [HomeController::class, 'propertyDetails']);
-
-
-Route::get('/property/featured/all', [HomeController::class, 'featuredProperties']);
-
-
-
-
-
-/*
-# Auth Route
-*/
-
-
-
-
-
-Route::middleware(['auth:api'])->controller(PropertyController::class)->prefix('auth/property')->group(function () {
-    Route::get('/my-listing', 'index');
-    Route::post('/store', 'store');
-    Route::post('/update', 'update');
-    Route::delete('/destroy/{id}', 'destroy');
-    Route::delete('/image/{imageId}', 'deleteImage');
-    Route::delete('/{id}/thumbnail', 'deleteThumbnail');
-});
 
 Route::middleware(['auth:api'])->controller(FavouriteController::class)->prefix('auth/property')->group(function () {
     Route::post('/favorite', 'toggleFavorite');
     Route::get('/favorite/list', 'favoritesList');
 });
-
-
-
-
 
 
 
@@ -117,8 +85,6 @@ Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
 
     Route::get('/profile/information', [UserController::class, 'me']);
     Route::post('/update-profile', [UserController::class, 'updateProfile']);
-
-    Route::post('/properties', [\App\Http\Controllers\Api\PropertyController::class, 'store']);
 
 
 
@@ -178,15 +144,16 @@ Route::prefix('cms')->name('cms.')->group(function () {
     Route::get('footer', [HomeController::class, 'footer'])->name('common');
 });
 
-use App\Http\Controllers\Api\FoodScannerController;
-
-// Ojais Wellness Food Scanning
-Route::post('/scan-food', [FoodScannerController::class, 'scan']);
 
 // =====================
 // Mess Management Routes
 // =====================
 use App\Http\Controllers\Api\MemberController;
+use App\Http\Controllers\Api\DepositController;
+use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\MealController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ReportController;
 
 Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::get('/list', [MessController::class, 'index']);          // GET  /api/mess/list
@@ -195,22 +162,31 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::post('/leave', [MessController::class, 'leave']);        // POST /api/mess/leave
 
     // Member Management
-    Route::get('/members/list', [MemberController::class, 'index']);              // GET  /api/mess/members
-    Route::post('/members/store', [MemberController::class, 'store']);             // POST /api/mess/members
-    Route::delete('/members/{id}', [MemberController::class, 'destroy']);    // DELETE /api/mess/members/{id}
-    Route::patch('/members/{id}/role', [MemberController::class, 'changeRole']); // PATCH /api/mess/members/{id}/role
-});
+    Route::get('/members/list', [MemberController::class, 'index']);
+    Route::post('/members/store', [MemberController::class, 'store']);
+    Route::delete('/members/{id}', [MemberController::class, 'destroy']);
+    Route::patch('/members/{id}/role', [MemberController::class, 'changeRole']);
 
-Route::get('/create-admin', function () {
+    // Deposit (Add Money)
+    Route::get('/deposits/list', [DepositController::class, 'index']);
+    Route::post('/deposits/store', [DepositController::class, 'store']);
+    Route::delete('/deposits/{id}', [DepositController::class, 'destroy']);
 
-    $user = User::create([
-        'name'     => 'Admin',
-        'email'    => 'admin@example.com',
-        'password' => Hash::make('password123'),
-        'slug'     => 'admin',
-    ]);
+    // Expense (Bazar / Khoroch)
+    Route::get('/expenses/list', [ExpenseController::class, 'index']);
+    Route::post('/expenses/store', [ExpenseController::class, 'store']);
+    Route::delete('/expenses/{id}', [ExpenseController::class, 'destroy']);
 
-    $user->assignRole('admin');
+    // Meals
+    Route::get('/meals/list', [MealController::class, 'index']);
+    Route::post('/meals/store', [MealController::class, 'store']);
+    Route::delete('/meals/{id}', [MealController::class, 'destroy']);
 
-    return 'Admin user created successfully';
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Reports
+    Route::get('/reports', [ReportController::class, 'index']);
+    Route::get('/reports/my-bill', [ReportController::class, 'myBill']);
+    Route::post('/reports/generate', [ReportController::class, 'generate']);
 });

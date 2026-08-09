@@ -47,7 +47,7 @@ class DepositController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'amount'  => 'required|numeric|min:0',
-            'date'    => 'required|date',
+            'date'    => 'required',
             'method'  => 'nullable|string',
             'note'    => 'nullable|string',
         ]);

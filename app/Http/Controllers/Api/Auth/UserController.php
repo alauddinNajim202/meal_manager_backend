@@ -18,24 +18,14 @@ class UserController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->select = ['id', 'name', 'phone', 'email', 'avatar', 'dob', 'address', 'nid_number', 'religion', 'gender', 'profession', 'division_id', 'district_id', 'upazila_id', 'whatsapp_number'];
+        $this->select = ['id', 'name', 'phone', 'email','avatar'];
     }
 
     public function me()
     {
         $user = User::select($this->select)->find(auth('api')->user()->id);
 
-        $data = [
-            'total_properties' => $user->properties()->count(),
-            'total_favorites' => $user->favourites()->count(),
-            'total_views' => 0,
-            'user' => $user,
-        ];
-
-
-
-
-        return Helper::jsonResponse(true, 'User details fetched successfully', 200, $data);
+        return Helper::jsonResponse(true, 'User details fetched successfully', 200, $user);
     }
 
     public function updateProfile(Request $request)
@@ -46,18 +36,10 @@ class UserController extends Controller
             // Validate the request
             $validatedData = $request->validate([
 
-                'avatar'                          => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
                 'name'                            => 'nullable|string|max:255',
                 'phone'                           => 'nullable|string|max:255',
-                'address'                         => 'nullable|string|max:255',
-                'division_id'                     => 'nullable|exists:divisions,id',
-                'district_id'                     => 'nullable|exists:districts,id',
-                'upazila_id'                      => 'nullable|exists:upazilas,id',
-                'religion'                        => 'nullable|string|max:255',
-                'gender'                          => 'nullable|string|max:255',
-                'whatsapp_number'                 => 'nullable|string|max:255',
-                'nid_number'                      => 'nullable|string|max:255',
-                'referred_by_id'                  => 'nullable|exists:users,id',
+                // 'address'                         => 'nullable|string|max:255',
+                'avatar'                          => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
 
             ]);
 
@@ -66,14 +48,6 @@ class UserController extends Controller
                 'name'                     => $request->input('name') ?? $user->name,
                 'phone'                    => $request->input('phone') ?? $user->phone,
                 'address'                  => $request->input('address') ?? $user->address,
-                'division_id'              => $request->input('division_id') ?? $user->division_id,
-                'district_id'              => $request->input('district_id') ?? $user->district_id,
-                'upazila_id'               => $request->input('upazila_id') ?? $user->upazila_id,
-                'religion'                 => $request->input('religion') ?? $user->religion,
-                'gender'                   => $request->input('gender') ?? $user->gender,
-                'whatsapp_number'          => $request->input('whatsapp_number') ?? $user->whatsapp_number,
-                'nid_number'               => $request->input('nid_number') ?? $user->nid_number,
-                'referred_by_id'           => $request->input('referred_by_id') ?? $user->referred_by_id,
             ]);
 
 
