@@ -29,13 +29,23 @@ class MemberController extends Controller
         }
 
         $mess = Mess::find($user->current_mess_id);
-        $members = $mess->users()->withPivot('role', 'status')->get()
+        $members = $mess->users()->withPivot('role', 'status', 'nid', 'nid_front', 'nid_back', 'emergency_contact_phone', 'advance_amount', 'month', 'joining_date', 'room_rent', 'notes')->get()
             ->map(function ($member) {
                 return [
                     'id'     => $member->id,
                     'name'   => $member->name,
                     'phone'  => $member->phone,
-                    'avatar' => $member->avatar,
+                    'avatar' => $member->avatar ? url($member->avatar) : null,
+                    'email'  => $member->email,
+                    'nid'  => $member->pivot->nid,
+                    'nid_front'  => $member->pivot->nid_front ? url($member->pivot->nid_front) : null,
+                    'nid_back'  => $member->pivot->nid_back ? url($member->pivot->nid_back) : null,
+                    'emergency_contact_phone'  => $member->pivot->emergency_contact_phone,
+                    'advance_amount'  => $member->pivot->advance_amount,
+                    'month'  => $member->pivot->month,
+                    'joining_date'  => $member->pivot->joining_date,
+                    'room_rent'  => $member->pivot->room_rent,
+                    'notes'  => $member->pivot->notes,
                     'role'   => $member->pivot->role,
                     'status' => $member->pivot->status,
                 ];
@@ -44,13 +54,14 @@ class MemberController extends Controller
         return $this->success($members, 'Members fetched successfully', 200);
     }
 
-    /**
+    /**PP
      * Add a member to the current active mess.
      * If the user exists (by phone), attach them.
      * If not, create a new account and then attach.
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         $authUser = auth('api')->user();
 
         if (!$this->isManagerOfCurrentMess($authUser)) {
@@ -129,6 +140,7 @@ class MemberController extends Controller
                 'room_rent'      => $request->room_rent,
                 'notes'          => $request->notes,
             ]);
+            
 
             // If the member has no active mess, set this as their current mess
             if (!$member->current_mess_id) {
@@ -153,6 +165,8 @@ class MemberController extends Controller
                 'role'                    => 'member',
                 'status'                  => 'active',
             ];
+
+
             DB::commit();
 
             return $this->success($data, 'Member added successfully', 201);
