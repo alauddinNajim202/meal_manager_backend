@@ -48,8 +48,8 @@ class TransactionController extends Controller
 
         // total used percentage
 
-        $totalUsedPercentage = ($totalExpenses / $totalDeposits) * 100;
-        
+        $totalUsedPercentage = $totalDeposits > 0 ? ($totalExpenses / $totalDeposits) * 100 : 0;
+
 
 
 

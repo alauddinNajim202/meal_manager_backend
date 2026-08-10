@@ -19,7 +19,7 @@ class Helper
             return null;
         }
 
-        $imageName = Str::slug($name) . '.' . $file->extension();
+        $imageName = time() . '-' . Str::random(8) . '.' . $file->getClientOriginalExtension();
         $path      = public_path('uploads/' . $folder);
         if (!file_exists($path)) {
             mkdir($path, 0755, true);

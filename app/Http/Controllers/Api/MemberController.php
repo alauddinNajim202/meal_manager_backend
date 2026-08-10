@@ -25,7 +25,7 @@ class MemberController extends Controller
         $user = auth('api')->user();
 
         if (!$user->current_mess_id) {
-            return $this->error(null, 'No active mess selected.', 400);
+            return $this->error(null, 'No active mess selected.');
         }
 
         $mess = Mess::find($user->current_mess_id);
@@ -82,7 +82,7 @@ class MemberController extends Controller
             'joining_date' => 'nullable',
             'room_rent' => 'nullable|numeric',
             'notes' => 'nullable|string|max:255',
-            
+
 
         ]);
 
@@ -119,7 +119,7 @@ class MemberController extends Controller
                     'email'                   => $email,
                     'avatar'                  => $request->avatar ? Helper::fileUpload($request->avatar, 'users', $request->name) : null,
                     'password'                => Hash::make(str()->random(10)),
-                    
+
                 ]);
             }
 
@@ -140,7 +140,7 @@ class MemberController extends Controller
                 'room_rent'      => $request->room_rent,
                 'notes'          => $request->notes,
             ]);
-            
+
 
             // If the member has no active mess, set this as their current mess
             if (!$member->current_mess_id) {
