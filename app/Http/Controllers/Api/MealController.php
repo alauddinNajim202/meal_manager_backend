@@ -17,6 +17,8 @@ class MealController extends Controller
     /**
      * List meals for the current active mess filtered by month & year.
      */
+
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -32,36 +34,69 @@ class MealController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+            return $this->error(
+                $validator->errors()->first(),
+                'Validation failed',
+                422
+            );
         }
 
-        $meals = Meal::where('mess_id', $user->current_mess_id)
-            ->when($request->day, function ($query) use ($request) {
-                $query->whereDay('date', $request->day);
-            })
-            ->when($request->month, function ($query) use ($request) {
-                $query->whereMonth('date', $request->month);
-            })
-            ->when($request->year, function ($query) use ($request) {
-                $query->whereYear('date', $request->year);
-            })
-            ->with('user:id,name,avatar')
-            ->get()
-            ->map(function ($meal) {
-                return [
-                    'id'        => $meal->id,
-                    'user_member'      => $meal->user,
-                    'date'      => $meal->date,
-                    'breakfast' => $meal->breakfast,
-                    'lunch'     => $meal->lunch,
-                    'dinner'    => $meal->dinner,
-                    'total'     => $meal->total,
-                    'is_guest'  => $meal->is_guest,
-                ];
-            });
+        $messId = $user->current_mess_id;
 
-        return $this->success($meals, 'Meals fetched successfully', 200);
+        // Get all members of current mess
+        $members = User::whereHas('messes', function ($query) use ($messId) {
+                $query->where('messes.id', $messId);
+            })
+            ->with([
+                'meals' => function ($query) use ($messId, $request) {
+                    $query->where('mess_id', $messId)
+                        ->when($request->day, function ($query) use ($request) {
+                            $query->whereDay('date', $request->day);
+                        })
+                        ->when($request->month, function ($query) use ($request) {
+                            $query->whereMonth('date', $request->month);
+                        })
+                        ->when($request->year, function ($query) use ($request) {
+                            $query->whereYear('date', $request->year);
+                        });
+                }
+            ])
+            ->select('id', 'name', 'avatar')
+            ->get()
+            ->map(function ($member) {
+
+                return [
+                    'user_member' => [
+                        'id'     => $member->id,
+                        'name'   => $member->name,
+                        'avatar' => $member->avatar,
+                    ],
+
+                    'meals' => $member->meals->map(function ($meal) {
+                        return [
+                            'id'        => $meal->id,
+                            'date'      => $meal->date,
+                            'breakfast' => $meal->breakfast,
+                            'lunch'     => $meal->lunch,
+                            'dinner'    => $meal->dinner,
+                            'total'     => $meal->total,
+                            'is_guest'  => $meal->is_guest,
+                        ];
+                    })->values(),
+                ];
+            })
+            ->values();
+
+        return $this->success(
+            $members,
+            'Mess members and meals fetched successfully',
+            200
+        );
     }
+
+
+
+
 
     /**
      * Store or update daily meals for a member.
