@@ -45,47 +45,46 @@ class MealController extends Controller
 
         // Get all members of current mess
         $members = User::whereHas('messes', function ($query) use ($messId) {
-                $query->where('messes.id', $messId);
-            })
-            ->with([
-                'meals' => function ($query) use ($messId, $request) {
-                    $query->where('mess_id', $messId)
-                        ->when($request->day, function ($query) use ($request) {
-                            $query->whereDay('date', $request->day);
-                        })
-                        ->when($request->month, function ($query) use ($request) {
-                            $query->whereMonth('date', $request->month);
-                        })
-                        ->when($request->year, function ($query) use ($request) {
-                            $query->whereYear('date', $request->year);
-                        });
-                }
-            ])
-            ->select('id', 'name', 'avatar')
-            ->get()
-            ->map(function ($member) {
+        $query->where('messes.id', $messId);
+                })
+                ->with([
+                    'meals' => function ($query) use ($messId, $request) {
+                        $query->where('mess_id', $messId)
+                            ->when($request->day, function ($query) use ($request) {
+                                $query->whereDay('date', $request->day);
+                            })
+                            ->when($request->month, function ($query) use ($request) {
+                                $query->whereMonth('date', $request->month);
+                            })
+                            ->when($request->year, function ($query) use ($request) {
+                                $query->whereYear('date', $request->year);
+                            });
+                    }
+                ])
+                ->select('id', 'name', 'avatar')
+                ->get()
+                ->map(function ($member) {
 
-                return [
-                    'user_member' => [
-                        'id'     => $member->id,
-                        'name'   => $member->name,
-                        'avatar' => $member->avatar,
-                    ],
+                    $meal = $member->meals->first();
 
-                    'meals' => $member->meals->map(function ($meal) {
-                        return [
-                            'id'        => $meal->id,
-                            'date'      => $meal->date,
-                            'breakfast' => $meal->breakfast,
-                            'lunch'     => $meal->lunch,
-                            'dinner'    => $meal->dinner,
-                            'total'     => $meal->total,
-                            'is_guest'  => $meal->is_guest,
-                        ];
-                    })->values(),
-                ];
-            })
-            ->values();
+                    return [
+                        'user_member' => [
+                            'id'     => $member->id,
+                            'name'   => $member->name,
+                            'avatar' => $member->avatar,
+                        ],
+
+                        'meal' => [
+                            'id'        => $meal?->id,
+                            'date'      => $meal?->date,
+                            'breakfast' => $meal?->breakfast ?? 0,
+                            'lunch'     => $meal?->lunch ?? 0,
+                            'dinner'    => $meal?->dinner ?? 0,
+                            'total'     => $meal?->total ?? 0,
+                            'is_guest'  => $meal?->is_guest ?? false,
+                        ],
+                    ];
+                });
 
         return $this->success(
             $members,
