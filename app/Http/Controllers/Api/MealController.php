@@ -77,10 +77,10 @@ class MealController extends Controller
                         'meal' => [
                             'id'        => $meal?->id,
                             'date'      => $meal?->date,
-                            'breakfast' => $meal?->breakfast ?? 0,
-                            'lunch'     => $meal?->lunch ?? 0,
-                            'dinner'    => $meal?->dinner ?? 0,
-                            'total'     => $meal?->total ?? 0,
+                            'breakfast' => $meal?->breakfast ?? "0",
+                            'lunch'     => $meal?->lunch ?? "0",
+                            'dinner'    => $meal?->dinner ?? "0",
+                            'total'     => $meal?->total ?? "0",
                             'is_guest'  => $meal?->is_guest ?? false,
                         ],
                     ];
