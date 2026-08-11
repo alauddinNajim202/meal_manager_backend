@@ -26,8 +26,9 @@ class MealController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'month' => 'required|integer|min:1|max:12',
-            'year'  => 'required|integer',
+            'day'   => 'nullable|integer|min:1|max:31',
+            'month' => 'nullable|integer|min:1|max:12',
+            'year'  => 'nullable|integer',
         ]);
 
         if ($validator->fails()) {
@@ -35,14 +36,21 @@ class MealController extends Controller
         }
 
         $meals = Meal::where('mess_id', $user->current_mess_id)
-            ->whereMonth('date', $request->month)
-            ->whereYear('date', $request->year)
+            ->when($request->day, function ($query) use ($request) {
+                $query->whereDay('date', $request->day);
+            })
+            ->when($request->month, function ($query) use ($request) {
+                $query->whereMonth('date', $request->month);
+            })
+            ->when($request->year, function ($query) use ($request) {
+                $query->whereYear('date', $request->year);
+            })
             ->with('user:id,name,avatar')
             ->get()
             ->map(function ($meal) {
                 return [
                     'id'        => $meal->id,
-                    'user'      => $meal->user,
+                    'user_member'      => $meal->user,
                     'date'      => $meal->date,
                     'breakfast' => $meal->breakfast,
                     'lunch'     => $meal->lunch,
@@ -67,47 +75,85 @@ class MealController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'user_id'   => 'required|exists:users,id',
-            'date'      => 'required|date',
-            'breakfast' => 'required|numeric|min:0',
-            'lunch'     => 'required|numeric|min:0',
-            'dinner'    => 'required|numeric|min:0',
-            'is_guest'  => 'boolean',
+            'meals' => 'required|array|min:1',
+            'meals.*.user_id' => 'required|exists:users,id',
+            'meals.*.breakfast' => 'required|numeric|min:0',
+            'meals.*.lunch' => 'required|numeric|min:0',
+            'meals.*.dinner' => 'required|numeric|min:0',
+            'meals.*.is_guest' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
-            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+            return $this->error(
+                $validator->errors()->first(),
+                'Validation failed',
+                422
+            );
         }
 
         try {
             $messId = $user->current_mess_id;
 
-            // Verify the target user belongs to the same mess via pivot table
-            $targetUser = User::findOrFail($request->user_id);
-            $belongsToMess = $targetUser->messes()->where('mess_id', $messId)->exists();
+            $savedMeals = [];
 
-            if (!$belongsToMess) {
-                return $this->error(null, 'This user does not belong to your mess.', 403);
+            foreach ($request->meals as $mealData) {
+
+                // Find target user
+                $targetUser = User::find($mealData['user_id']);
+
+                if (!$targetUser) {
+                    return $this->error(
+                        null,
+                        'User not found.',
+                        404
+                    );
+                }
+
+                // Verify user belongs to same mess
+                $belongsToMess = $targetUser
+                    ->messes()
+                    ->where('mess_id', $messId)
+                    ->exists();
+
+                if (!$belongsToMess) {
+                    return $this->error(
+                        null,
+                        "User ID {$mealData['user_id']} does not belong to your mess.",
+                        403
+                    );
+                }
+
+                // Create or update meal
+                $meal = Meal::updateOrCreate(
+                    [
+                        'user_id' => $mealData['user_id'],
+                        'mess_id' => $messId,
+                        'date' => $request->date,
+                    ],
+                    [
+                        'breakfast' => $mealData['breakfast'],
+                        'lunch' => $mealData['lunch'],
+                        'dinner' => $mealData['dinner'],
+                        'is_guest' => $mealData['is_guest'] ?? false,
+                    ]
+                );
+
+                $savedMeals[] = $meal;
             }
 
-            $meal = Meal::updateOrCreate(
-                [
-                    'user_id' => $request->user_id,
-                    'mess_id' => $messId,
-                    'date'    => $request->date,
-                ],
-                [
-                    'breakfast' => $request->breakfast,
-                    'lunch'     => $request->lunch,
-                    'dinner'    => $request->dinner,
-                    'is_guest'  => $request->is_guest ?? false,
-                ]
+            return $this->success(
+                $savedMeals,
+                'Meals saved successfully',
+                200
             );
 
-            return $this->success($meal, 'Meal saved successfully', 200);
-
         } catch (Exception $e) {
-            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+
+            return $this->error(
+                null,
+                $e->getMessage(),
+                500
+            );
         }
     }
 
