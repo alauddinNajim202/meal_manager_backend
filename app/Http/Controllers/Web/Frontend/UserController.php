@@ -19,7 +19,7 @@ class UserController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'phone' => ['required', 'exists:users,phone'],
             'password' => ['required'],
         ]);
 
@@ -29,8 +29,8 @@ class UserController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+            'phone' => 'The provided credentials do not match our records.',
+        ])->onlyInput('phone');
     }
 
     public function dashboard()
@@ -51,9 +51,9 @@ class UserController extends Controller
     public function deleteAccount(Request $request)
     {
         $user = Auth::user();
-        
+
         Auth::logout();
-        
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

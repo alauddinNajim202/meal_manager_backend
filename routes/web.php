@@ -38,7 +38,7 @@ use App\Http\Controllers\Web\Frontend\UserController;
 Route::prefix('user')->name('user.')->group(function () {
     Route::get('/login', [UserController::class, 'loginPage'])->name('login');
     Route::post('/login', [UserController::class, 'login'])->name('login.post');
-    
+
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
         Route::post('/logout', [UserController::class, 'logout'])->name('logout');
