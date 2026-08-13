@@ -155,6 +155,7 @@ use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\MealController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\BazarScheduleController;
 
 Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::get('/list', [MessController::class, 'index']);          // GET  /api/mess/list
@@ -182,6 +183,19 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::get('/meals/list', [MealController::class, 'index']);
     Route::post('/meals/store', [MealController::class, 'store']);
     Route::delete('/meals/{id}', [MealController::class, 'destroy']);
+
+
+    // Bazar Schedule
+    Route::get('/bazar-schedule/list', [BazarScheduleController::class, 'index']);
+    Route::post('/bazar-schedule/store', [BazarScheduleController::class, 'store']);
+    Route::delete('/bazar-schedule/{id}', [BazarScheduleController::class, 'destroy']);
+
+
+
+
+
+
+
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
