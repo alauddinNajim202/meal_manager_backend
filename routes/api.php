@@ -187,7 +187,7 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
     // Bazar Schedule
     Route::get('/bazar-schedule/list', [BazarScheduleController::class, 'index']);
-    Route::post('/bazar-schedule/store', [BazarScheduleController::class, 'store']);
+    Route::post('/bazar-schedule/bulk/store', [BazarScheduleController::class, 'store']);
     Route::delete('/bazar-schedule/{id}', [BazarScheduleController::class, 'destroy']);
 
 
