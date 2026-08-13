@@ -131,7 +131,7 @@ class BazarScheduleController extends Controller
                     if (!$belongsToMess) {
                         return $this->error(
                             null,
-                            "User ID {$mealData['user_id']} does not belong to your mess.",
+                            "User ID {$item['user_id']} does not belong to your mess.",
                             403
                         );
                     }
