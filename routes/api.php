@@ -158,55 +158,48 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\BazarScheduleController;
 
 Route::middleware(['auth:api'])->prefix('mess')->group(function () {
-    Route::get('/list', [MessController::class, 'index']);          // GET  /api/mess/list
-    Route::post('/create', [MessController::class, 'create']);      // POST /api/mess/create
-    Route::post('/switch', [MessController::class, 'switchMess']);  // POST /api/mess/switch
-    Route::post('/leave', [MessController::class, 'leave']);        // POST /api/mess/leave
 
-    // Member Management
+    // ===== Mess Management =====
+    Route::get('/list', [MessController::class, 'index']);
+    Route::post('/create', [MessController::class, 'create']);
+    Route::post('/switch', [MessController::class, 'switchMess']);
+    Route::post('/leave', [MessController::class, 'leave']);
+
+    // ===== Read-only Routes (Manager + Member both) =====
     Route::get('/members/list', [MemberController::class, 'index']);
-    Route::post('/members/store', [MemberController::class, 'store']);
-    Route::delete('/members/{id}', [MemberController::class, 'destroy']);
-    Route::patch('/members/{id}/role', [MemberController::class, 'changeRole']);
-
-    // Deposit (Add Money)
     Route::get('/deposits/list', [DepositController::class, 'index']);
-    Route::post('/deposits/store', [DepositController::class, 'store']);
-    Route::delete('/deposits/{id}', [DepositController::class, 'destroy']);
-
-    // Expense (Bazar / Khoroch)
     Route::get('/expenses/list', [ExpenseController::class, 'index']);
-    Route::post('/expenses/store', [ExpenseController::class, 'store']);
-    Route::delete('/expenses/{id}', [ExpenseController::class, 'destroy']);
-
-    // Meals
     Route::get('/meals/list', [MealController::class, 'index']);
-    Route::post('/meals/store', [MealController::class, 'store']);
-    Route::delete('/meals/{id}', [MealController::class, 'destroy']);
-
-
-    // Bazar Schedule
     Route::get('/bazar-schedule/list', [BazarScheduleController::class, 'index']);
-    Route::post('/bazar-schedule/bulk/store', [BazarScheduleController::class, 'store']);
-    Route::delete('/bazar-schedule/{id}', [BazarScheduleController::class, 'destroy']);
-
-
-
-
-
-
-
-
-    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
-
-    // Reports
     Route::get('/reports', [ReportController::class, 'index']);
     Route::get('/reports/my-bill', [ReportController::class, 'myBill']);
-    Route::post('/reports/generate', [ReportController::class, 'generate']);
-
-
     Route::get('/transactions', [TransactionController::class, 'index']);
 
+    // ===== Write Routes (Manager only) =====
+    Route::middleware(['mess.manager'])->group(function () {
+        // Members
+        Route::post('/members/store', [MemberController::class, 'store']);
+        Route::delete('/members/{id}', [MemberController::class, 'destroy']);
+        Route::patch('/members/{id}/role', [MemberController::class, 'changeRole']);
 
+        // Deposits
+        Route::post('/deposits/store', [DepositController::class, 'store']);
+        Route::delete('/deposits/{id}', [DepositController::class, 'destroy']);
+
+        // Expenses
+        Route::post('/expenses/store', [ExpenseController::class, 'store']);
+        Route::delete('/expenses/{id}', [ExpenseController::class, 'destroy']);
+
+        // Meals
+        Route::post('/meals/store', [MealController::class, 'store']);
+        Route::delete('/meals/{id}', [MealController::class, 'destroy']);
+
+        // Bazar Schedule
+        Route::post('/bazar-schedule/bulk/store', [BazarScheduleController::class, 'store']);
+        Route::post('/bazar-schedule/remove', [BazarScheduleController::class, 'destroy']);
+
+        // Reports
+        Route::post('/reports/generate', [ReportController::class, 'generate']);
+    });
 });

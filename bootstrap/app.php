@@ -9,6 +9,7 @@ use App\Http\Middleware\WebDeveloperMiddleware;
 use App\Http\Middleware\ApiOtpVerifiedMiddleware;
 use App\Http\Middleware\WebOtpVerifiedMiddleware;
 use App\Http\Middleware\ApiRetailerMiddleware;
+use App\Http\Middleware\MessManagerMiddleware;
 use App\Http\Middleware\WebStaffMiddleware;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -60,7 +61,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'check'                 => WebAuthCheckMiddleware::class,
             'role'                  => RoleMiddleware::class,
             'permission'            => PermissionMiddleware::class,
-            'role_or_permission'    => RoleOrPermissionMiddleware::class
+            'role_or_permission'    => RoleOrPermissionMiddleware::class,
+            'mess.manager'          => MessManagerMiddleware::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'payment/stripe/webhook',

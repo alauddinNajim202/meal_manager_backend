@@ -58,6 +58,7 @@ class User extends Authenticatable implements JWTSubject
      */
     protected $hidden = [
         'password',
+        'plain_password',
         'remember_token',
     ];
 

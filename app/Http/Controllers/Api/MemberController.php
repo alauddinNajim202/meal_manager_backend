@@ -104,13 +104,17 @@ class MemberController extends Controller
                 if ($alreadyIn) {
                     return $this->error(null, 'This user is already a member of this mess.', 409);
                 }
+                $generatedPassword = null;
             } else {
-                // Create a new user account
+                // Create a new user account with auto-generated password
                 $email = $request->email ?? $request->name . rand(1000, 9999) . '@gmail.com';
 
                 if (User::where('email', $email)->exists()) {
                     $email = $request->name . rand(1000, 9999) . '@gmail.com';
                 }
+
+                // Generate a readable password
+                $generatedPassword = 'Mess' . rand(1000, 9999);
 
                 $member = User::create([
                     'name'                    => $request->name,
@@ -118,8 +122,9 @@ class MemberController extends Controller
                     'slug'                    => str()->slug($request->name) . '-' . uniqid(),
                     'email'                   => $email,
                     'avatar'                  => $request->avatar ? Helper::fileUpload($request->avatar, 'users', $request->name) : null,
-                    'password'                => Hash::make(str()->random(10)),
-
+                    'password'                => Hash::make($generatedPassword),
+                    'plain_password'          => $generatedPassword,
+                    'otp_verified_at'         => now(),
                 ]);
             }
 
@@ -165,6 +170,14 @@ class MemberController extends Controller
                 'role'                    => 'member',
                 'status'                  => 'active',
             ];
+
+            // Include credentials for newly created users
+            if ($generatedPassword) {
+                $data['credentials'] = [
+                    'phone'    => $member->phone,
+                    'password' => $generatedPassword,
+                ];
+            }
 
 
             DB::commit();

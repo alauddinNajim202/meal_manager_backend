@@ -115,11 +115,7 @@ class BazarScheduleController extends Controller
                     $targetUser = User::find($item['user_id']);
 
                     if (!$targetUser) {
-                        return $this->error(
-                            null,
-                            'User not found.',
-                            404
-                        );
+                        throw new \Exception('User not found.', 404);
                     }
 
                     // Verify user belongs to same mess
@@ -129,11 +125,7 @@ class BazarScheduleController extends Controller
                         ->exists();
 
                     if (!$belongsToMess) {
-                        return $this->error(
-                            null,
-                            "User ID {$item['user_id']} does not belong to your mess.",
-                            403
-                        );
+                        throw new \Exception("User ID {$item['user_id']} does not belong to your mess.", 403);
                     }
 
                     $results[] = BazarSchedule::updateOrCreate(
@@ -146,9 +138,39 @@ class BazarScheduleController extends Controller
 
             return $this->success($saved, 'Bazar schedule created successfully');
         } catch (\Exception $e) {
-            return $this->error($e->getMessage(), 'Something went wrong', 500);
+            $code = in_array($e->getCode(), [403, 404]) ? $e->getCode() : 500;
+            return $this->error($e->getMessage(), $code === 500 ? 'Something went wrong' : $e->getMessage(), $code);
         }
 
+    }
+
+    public function destroy(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$this->isManagerOfCurrentMess($user)) {
+            return $this->error(null, 'Only managers can perform this action.', 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|exists:bazar_schedules,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
+
+        $schedule = BazarSchedule::where('id', $request->id)
+            ->where('mess_id', $user->current_mess_id)
+            ->first();
+
+        if (!$schedule) {
+            return $this->error(null, 'Schedule not found for this date.', 404);
+        }
+
+        $schedule->delete();
+
+        return $this->success(null, 'Bazar schedule deleted successfully');
     }
 
     private function isManagerOfCurrentMess(User $user): bool

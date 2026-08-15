@@ -29,19 +29,37 @@ class LoginController extends Controller
     public function Login(Request $request)
     {
         try {
-           $validator = Validator::make($request->all(), [
-               'phone'    => 'required|exists:users,phone',
-               'password' => 'required|string|min:6',
-           ]);
+            $validator = Validator::make($request->all(), [
+                'phone'    => 'required|exists:users,phone',
+                'password' => 'nullable|string|min:6',
+            ]);
 
+            if ($validator->fails()) {
+                return $this->error($validator->errors()->first(), 'Validation failed', 422);
+            }
 
             $user = User::where('phone', $request->phone)->first();
 
-        
             if (!$user) {
                 return $this->error(null, 'user is not active', 404);
             }
 
+            // Step 1: If no password provided, check if member and return password
+            if (!$request->password) {
+                $isMember = $user->messes()->exists();
+
+                if ($isMember && $user->plain_password) {
+                    return $this->success([
+                        'phone'    => $user->phone,
+                        'password' => $user->plain_password,
+                        'requires_login' => true,
+                    ], 'Password retrieved. Please login with this password.');
+                }
+
+                return $this->error(null, 'Password is required.', 422);
+            }
+
+            // Step 2: Normal login with phone + password
             //! Check the password
             if (!Hash::check($request->password, $user->password)) {
                 return $this->error(null, 'Invalid password', 401);
