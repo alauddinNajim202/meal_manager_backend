@@ -31,7 +31,7 @@ class LoginController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'phone'    => 'required|exists:users,phone',
-                'password' => 'nullable|string|min:6',
+                'password' => 'required|string|min:6',
             ]);
 
             if ($validator->fails()) {
@@ -44,22 +44,22 @@ class LoginController extends Controller
                 return $this->error(null, 'user is not active', 404);
             }
 
-            // Step 1: If no password provided, check if member and return password
-            if (!$request->password) {
-                $isMember = $user->messes()->exists();
-
-                if ($isMember && $user->plain_password) {
+            // New member check: if plain_password exists, this is a new member
+            if ($user->plain_password) {
+                // Check if they're providing the correct plain_password to actually login
+                if ($request->password === $user->plain_password) {
+                    // Correct plain_password — clear it and proceed to login
+                    $user->update(['plain_password' => null]);
+                } else {
+                    // First attempt or wrong password — show them their password
                     return $this->success([
-                        'phone'    => $user->phone,
-                        'password' => $user->plain_password,
-                        'requires_login' => true,
-                    ], 'Password retrieved. Please login with this password.');
+                        'is_new_member'  => true,
+                        'phone'          => $user->phone,
+                        'password'       => $user->plain_password,
+                    ], 'You are a new member. Please login with the provided password.');
                 }
-
-                return $this->error(null, 'Password is required.', 422);
             }
 
-            // Step 2: Normal login with phone + password
             //! Check the password
             if (!Hash::check($request->password, $user->password)) {
                 return $this->error(null, 'Invalid password', 401);
