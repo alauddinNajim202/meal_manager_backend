@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -244,11 +245,14 @@ class UserController extends Controller
     public function password_update(Request $request)
     {
         try {
-            $request->validate([
+            $validator = Validator::make($request->all(), [
                 'old_password' => 'required|string',
                 'password' => 'required|string|min:6|confirmed',
             ]);
 
+            if($validator->fails()){
+                return Helper::jsonResponse(false, $validator->errors()->first(), 422);
+            }
             $user = auth('api')->user();
             if (! Hash::check($request->old_password, $user->password)) {
                 return Helper::jsonResponse(false, 'Invalid old password', 401);

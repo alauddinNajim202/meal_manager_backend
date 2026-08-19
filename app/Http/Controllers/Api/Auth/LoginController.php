@@ -45,20 +45,20 @@ class LoginController extends Controller
             }
 
             // New member check: if plain_password exists, this is a new member
-            if ($user->plain_password) {
-                // Check if they're providing the correct plain_password to actually login
-                if ($request->password === $user->plain_password) {
-                    // Correct plain_password — clear it and proceed to login
-                    $user->update(['plain_password' => null]);
-                } else {
-                    // First attempt or wrong password — show them their password
-                    return $this->success([
-                        'is_new_member'  => true,
-                        'phone'          => $user->phone,
-                        'password'       => $user->plain_password,
-                    ], 'You are a new member. Please login with the provided password.');
-                }
-            }
+            // if ($user->plain_password) {
+            //     // Check if they're providing the correct plain_password to actually login
+            //     if ($request->password === $user->plain_password) {
+            //         // Correct plain_password — clear it and proceed to login
+            //         $user->update(['plain_password' => null]);
+            //     } else {
+            //         // First attempt or wrong password — show them their password
+            //         return $this->success([
+            //             'is_new_member'  => true,
+            //             'phone'          => $user->phone,
+            //             'password'       => $user->plain_password,
+            //         ], 'You are a new member. Please login with the provided password.');
+            //     }
+            // }
 
             //! Check the password
             if (!Hash::check($request->password, $user->password)) {
