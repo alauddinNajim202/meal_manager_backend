@@ -28,9 +28,37 @@ class MemberController extends Controller
             return $this->error(null, 'No active mess selected.');
         }
 
-        $mess = Mess::find($user->current_mess_id);
-        $members = $mess->users()->withPivot('role', 'status', 'nid', 'nid_front', 'nid_back', 'emergency_contact_phone', 'advance_amount', 'month', 'joining_date', 'room_rent', 'notes')->get()
-            ->map(function ($member) {
+        $messId = $user->current_mess_id;
+        $mess = Mess::find($messId);
+
+        // Calculate Meal Rate for the Mess
+        $allMessMeals = \App\Models\Meal::where('mess_id', $messId)->get();
+        $totalMessMeals = $allMessMeals->sum('breakfast') + $allMessMeals->sum('lunch') + $allMessMeals->sum('dinner');
+        
+        $totalMessExpense = \App\Models\Expense::where('mess_id', $messId)->sum('amount');
+        
+        $mealRate = $totalMessMeals > 0 ? $totalMessExpense / $totalMessMeals : 0;
+
+        $members = $mess->users()
+            ->withPivot('role', 'status', 'nid', 'nid_front', 'nid_back', 'emergency_contact_phone', 'advance_amount', 'month', 'joining_date', 'room_rent', 'notes')
+            ->with([
+                'meals' => function($query) use ($messId) {
+                    $query->where('mess_id', $messId);
+                },
+                'deposits' => function($query) use ($messId) {
+                    $query->where('mess_id', $messId);
+                }
+            ])
+            ->get()
+            ->map(function ($member) use ($mealRate) {
+                $totalMeals = $member->meals->sum(function ($meal) {
+                    return $meal->breakfast + $meal->lunch + $meal->dinner;
+                });
+
+                $totalDeposits = $member->deposits->sum('amount');
+                $totalExpenses = round($totalMeals * $mealRate, 2);
+                $totalDues = round($totalExpenses - $totalDeposits, 2);
+
                 return [
                     'id'     => $member->id,
                     'name'   => $member->name,
@@ -48,11 +76,78 @@ class MemberController extends Controller
                     'notes'  => $member->pivot->notes,
                     'role'   => $member->pivot->role,
                     'status' => $member->pivot->status,
+                    'meal_account' => [
+                        'meal_rate' => $mealRate,
+                        'total_meals' => $totalMeals,
+                        'total_meal_cost' => $totalExpenses,
+                        'total_deposits' => $totalDeposits,
+                        'total_dues' => $totalDues,
+                    ]
                 ];
             });
 
         return $this->success($members, 'Members fetched successfully', 200);
     }
+
+
+    public function show($id)
+    {   
+        $user = auth('api')->user();
+
+        $member = User::where('id', $id)->
+            with([
+                'meals' => function($query) use ($user) {
+                    $query->where('mess_id', $user->current_mess_id)->orderBy('date', 'desc');
+                }
+            ])
+            ->first();
+
+        if (!$member) {
+            return $this->error(null, 'Member not found.', 404);
+        }
+
+        // Format the response
+        $data = [
+            'id' => $member->id,
+            'name' => $member->name,
+            'phone' => $member->phone,
+            'email' => $member->email,
+            'avatar' => $member->avatar ? url($member->avatar) : null,
+            'meals' => $member->meals->map(function ($meal) {
+                return [
+                    'id' => $meal->id,
+                    'date' => $meal->date->format('Y-m-d'),
+                    'breakfast' => (float) $meal->breakfast,
+                    'lunch' => (float) $meal->lunch,
+                    'dinner' => (float) $meal->dinner,
+                    'total' => $meal->breakfast + $meal->lunch + $meal->dinner,
+                    'is_guest' => (bool) $meal->is_guest,
+                ];
+            })
+        ];
+
+        return $this->success($data, 'Member fetched successfully', 200);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**PP
      * Add a member to the current active mess.

@@ -216,6 +216,29 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Meal::class, 'user_id');
     }
 
+    // deposits
+    public function deposits()
+    {
+        return $this->hasMany(Deposit::class, 'user_id');
+    }
+
+    // expenses
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class, 'user_id');
+    }
+
+    public function totalDeposits()
+    {
+        return $this->deposits()->sum('amount');
+    }
+
+    
+
+    
+
+    
+
 
     
 

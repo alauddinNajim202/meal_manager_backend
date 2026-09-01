@@ -51,7 +51,7 @@ class MessController extends Controller
         $validator = Validator::make($request->all(), [
             'name'    => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image',
         ]);
 
         if ($validator->fails()) {
@@ -87,6 +87,64 @@ class MessController extends Controller
             return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
         }
     }
+
+
+    // update
+    public function update(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'mess_id' => 'required|exists:messes,id',
+            'name'    => 'required|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'image' => 'nullable|image',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
+
+
+        try {
+            DB::beginTransaction();
+
+            $user = auth()->user();
+            $mess = Mess::find($request->mess_id);
+
+            if (!$mess) {
+                return $this->error(null, 'Mess not found', 404);
+            }
+
+            // Only manager/owner can update
+            $pivot = $user->messes()->where('mess_id', $mess->id)->first();
+            if (!$pivot || $pivot->pivot->role !== 'manager') {
+                return $this->error(null, 'Only managers can update mess.', 403);
+            }
+
+            $mess->update([
+                'name'    => $request->name,
+                'address' => $request->address,
+                'image' => $request->hasFile('image') ? Helper::fileUpload($request->image, 'messes', $request->name) : $mess->image,
+            ]);
+
+            DB::commit();
+
+            return $this->success($mess, 'Mess updated successfully', 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Switch the user's currently active mess.

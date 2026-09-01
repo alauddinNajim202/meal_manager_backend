@@ -162,11 +162,14 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     // ===== Mess Management =====
     Route::get('/list', [MessController::class, 'index']);
     Route::post('/create', [MessController::class, 'create']);
+    Route::post('/update', [MessController::class, 'update']);
+    // Route::post('/delete/{id}', [MessController::class, 'delete']);
     Route::post('/switch', [MessController::class, 'switchMess']);
     Route::post('/leave', [MessController::class, 'leave']);
 
     // ===== Read-only Routes (Manager + Member both) =====
     Route::get('/members/list', [MemberController::class, 'index']);
+    Route::get('/members/show/{id}', [MemberController::class, 'show']);
     Route::get('/deposits/list', [DepositController::class, 'index']);
     Route::get('/expenses/list', [ExpenseController::class, 'index']);
     Route::get('/meals/list', [MealController::class, 'index']);
@@ -197,6 +200,7 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
         // Bazar Schedule
         Route::post('/bazar-schedule/bulk/store', [BazarScheduleController::class, 'store']);
+        Route::post('/bazar-schedule/single/update', [BazarScheduleController::class, 'update']);
         Route::post('/bazar-schedule/remove', [BazarScheduleController::class, 'destroy']);
 
         // Reports

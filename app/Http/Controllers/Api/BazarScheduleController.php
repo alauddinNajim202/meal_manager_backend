@@ -79,6 +79,8 @@ class BazarScheduleController extends Controller
 
     public function store(Request $request)
     {
+
+        // dd($request->all());
         $user = auth()->user();
 
         if (!$this->isManagerOfCurrentMess($user)) {
@@ -142,6 +144,58 @@ class BazarScheduleController extends Controller
             return $this->error($e->getMessage(), $code === 500 ? 'Something went wrong' : $e->getMessage(), $code);
         }
 
+    }
+
+    public function update(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$this->isManagerOfCurrentMess($user)) {
+            return $this->error(null, 'Only managers can perform this action.', 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|exists:bazar_schedules,id',
+            'user_id' => 'required|exists:users,id',
+            'date' => 'required|date',
+            'status' => 'nullable|in:pending,completed'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
+
+        try {
+            $messId = $user->current_mess_id;
+
+            $schedule = BazarSchedule::where('id', $request->id)
+                ->where('mess_id', $messId)
+                ->first();
+
+            if (!$schedule) {
+                return $this->error(null, 'Schedule not found.', 404);
+            }
+
+            $targetUser = User::find($request->user_id);
+            if (!$targetUser) {
+                return $this->error(null, 'User not found.', 404);
+            }
+
+            $belongsToMess = $targetUser->messes()->where('mess_id', $messId)->exists();
+            if (!$belongsToMess) {
+                return $this->error(null, 'User does not belong to your mess.', 403);
+            }
+
+            $schedule->update([
+                'user_id' => $request->user_id,
+                'date' => $request->date,
+                'status' => $request->status ?? $schedule->status
+            ]);
+
+            return $this->success($schedule, 'Bazar schedule updated successfully');
+        } catch (\Exception $e) {
+            return $this->error($e->getMessage(), 'Something went wrong', 500);
+        }
     }
 
     public function destroy(Request $request)

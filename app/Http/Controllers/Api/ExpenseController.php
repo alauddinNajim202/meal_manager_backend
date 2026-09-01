@@ -8,6 +8,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use App\Models\User;
 
 class ExpenseController extends Controller
 {
@@ -32,13 +33,14 @@ class ExpenseController extends Controller
 
     public function store(Request $request)
     {
-        $user = auth()->user();
+        $user = auth('api')->user();
 
         if (!$user->current_mess_id) {
             return $this->error(null, 'No active mess selected.', 400);
         }
 
         $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
             'reason'      => 'required|string',
             'amount'      => 'required|numeric|min:0',
             'date'        => 'required|string',
@@ -49,10 +51,14 @@ class ExpenseController extends Controller
             return $this->error(null, $validator->errors()->first(), 422);
         }
 
+        if (!$this->isManagerOfCurrentMess($user)) {
+            return $this->error(null, 'You are not authorized to perform this action.', 403);
+        }
+
         try {
             $expense = Expense::create([
                 'mess_id'     => $user->current_mess_id,
-                'user_id'     => $user->id,
+                'user_id'     => $request->user_id,
                 'amount'      => $request->amount,
                 'reason'      => $request->reason,
                 'date'        => $request->date ?? now(),
@@ -82,6 +88,14 @@ class ExpenseController extends Controller
         } catch (Exception $e) {
             return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
         }
+    }
+
+    private function isManagerOfCurrentMess(User $user): bool
+    {
+        if (!$user->current_mess_id) return false;
+
+        $pivot = $user->messes()->where('mess_id', $user->current_mess_id)->first();
+        return $pivot && $pivot->pivot->role === 'manager';
     }
 }
 
