@@ -184,7 +184,9 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
         // Members
         Route::post('/members/store', [MemberController::class, 'store']);
         Route::delete('/members/{id}', [MemberController::class, 'destroy']);
-        Route::patch('/members/{id}/role', [MemberController::class, 'changeRole']);
+        Route::patch('/members/role/promote', [MemberController::class, 'changeRole']);
+        // remove member
+        Route::post('/members/remove', [MemberController::class, 'remove']);
 
         // Deposits
         Route::post('/deposits/store', [DepositController::class, 'store']);

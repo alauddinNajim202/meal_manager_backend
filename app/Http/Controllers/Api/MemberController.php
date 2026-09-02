@@ -130,25 +130,6 @@ class MemberController extends Controller
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**PP
      * Add a member to the current active mess.
      * If the user exists (by phone), attach them.
@@ -286,6 +267,56 @@ class MemberController extends Controller
     }
 
 
+    // remove member
+    public function remove(Request $request)
+    {
+        $authUser = auth('api')->user();
+
+        if (!$this->isManagerOfCurrentMess($authUser)) {
+            return $this->error(null, 'Only managers can remove members.', 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
+
+        try {
+            $messId = $authUser->current_mess_id;
+            $member = User::find($request->user_id);
+
+            if (!$member) {
+                return $this->error(null, 'Member not found.', 404);
+            }
+
+
+
+
+            $belongsToMess = $member->messes()->where('mess_id', $messId)->exists();
+            if (!$belongsToMess) {
+                return $this->error(null, 'This user is not a member of your mess.', 404);
+            }
+
+            // Cannot remove yourself
+            if ($member->id === $authUser->id) {
+                return $this->error(null, 'You cannot remove yourself.', 400);
+            }
+
+            // Permanently delete the user account and associated data
+            // (Meals, deposits, etc. should ideally be deleted via cascading foreign keys, or manually here if needed)
+            $member->messes()->detach();
+            $member->delete();
+
+            return $this->success(null, 'Member removed completely successfully.', 200);
+
+        } catch (Exception $e) {
+            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+        }
+    }    
+    
     /**
      * Remove a member from the current active mess.
      * Does NOT delete their account, just detaches from the pivot table.
@@ -331,7 +362,7 @@ class MemberController extends Controller
     /**
      * Change a member's role (manager <-> member).
      */
-    public function changeRole(Request $request, $id)
+    public function changeRole(Request $request)
     {
         $authUser = auth()->user();
 
@@ -341,6 +372,7 @@ class MemberController extends Controller
 
         $validator = Validator::make($request->all(), [
             'role' => 'required|in:manager,member',
+            'user_id' => 'required|exists:users,id',
         ]);
 
         if ($validator->fails()) {
@@ -349,15 +381,35 @@ class MemberController extends Controller
 
         try {
             $messId = $authUser->current_mess_id;
-            $member = User::findOrFail($id);
+            $member = User::find($request->user_id);
+
+            if (!$member) {
+                return $this->error(null, 'Member not found.', 404);
+            }
 
             $belongsToMess = $member->messes()->where('mess_id', $messId)->exists();
             if (!$belongsToMess) {
                 return $this->error(null, 'This user is not a member of your mess.', 404);
             }
 
-            // Update the pivot table role
+            // If promoting to manager, demote everyone else in this mess first
+            if ($request->role === 'manager') {
+                $userIdsInMess = DB::table('mess_user')->where('mess_id', $messId)->pluck('user_id');
+                
+                // Demote in pivot table
+                DB::table('mess_user')
+                    ->where('mess_id', $messId)
+                    ->update(['role' => 'member']);
+                    
+                // Demote in users table
+                User::whereIn('id', $userIdsInMess)->update(['role' => 'member']);
+            }
+
+            // Update the pivot table role for the specific user
             $member->messes()->updateExistingPivot($messId, ['role' => $request->role]);
+            
+            // Update the users table role
+            $member->update(['role' => $request->role]);
 
             return $this->success(null, "Role updated to '{$request->role}' successfully.", 200);
 
