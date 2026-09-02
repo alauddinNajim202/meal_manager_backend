@@ -183,7 +183,7 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::get('/seed-notifications', function () {
         \Illuminate\Support\Facades\DB::table('notifications')->truncate();
         
-        $mess = \App\Models\Mess::first();
+        $mess = \App\Models\Mess::find(18);
         if (!$mess) {
             return response()->json(['message' => 'No mess found! Create a mess first.']);
         }
