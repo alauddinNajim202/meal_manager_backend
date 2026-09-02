@@ -130,10 +130,17 @@ class BazarScheduleController extends Controller
                         throw new \Exception("User ID {$item['user_id']} does not belong to your mess.", 403);
                     }
 
-                    $results[] = BazarSchedule::updateOrCreate(
+                    $result = BazarSchedule::updateOrCreate(
                         ['mess_id' => $messId, 'date' => $item['date']],
                         ['user_id' => $item['user_id'], 'status' => $item['status'] ?? 'pending']
                     );
+                    
+                    $mess = \App\Models\Mess::find($messId);
+                    if ($mess) {
+                        $mess->notify(new \App\Notifications\BazarAssignedNotification($item['date'], $targetUser->name));
+                    }
+                    
+                    $results[] = $result;
                 }
                 return $results;
             });
@@ -191,6 +198,11 @@ class BazarScheduleController extends Controller
                 'date' => $request->date,
                 'status' => $request->status ?? $schedule->status
             ]);
+            
+            $mess = \App\Models\Mess::find($messId);
+            if ($mess) {
+                $mess->notify(new \App\Notifications\BazarAssignedNotification($request->date, $targetUser->name));
+            }
 
             return $this->success($schedule, 'Bazar schedule updated successfully');
         } catch (\Exception $e) {

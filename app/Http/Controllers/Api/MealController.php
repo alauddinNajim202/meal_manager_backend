@@ -171,6 +171,11 @@ class MealController extends Controller
                         'is_guest' => $mealData['is_guest'] ?? false,
                     ]
                 );
+                
+                $mess = \App\Models\Mess::find($messId);
+                if ($mess) {
+                    $mess->notify(new \App\Notifications\MealCountUpdatedNotification($request->date, $targetUser->name, $mealData['lunch'], $mealData['dinner']));
+                }
 
                 $savedMeals[] = $meal;
             }

@@ -65,6 +65,14 @@ class ExpenseController extends Controller
                 'description' => $request->description,
             ]);
 
+            // Notify the mess
+            $mess = \App\Models\Mess::find($user->current_mess_id);
+            $targetUser = \App\Models\User::find($request->user_id);
+            
+            if ($mess && $targetUser) {
+                $mess->notify(new \App\Notifications\BazarCostAddedNotification($targetUser->name, $request->amount, $request->description));
+            }
+
             return $this->success($expense, 'Expense added successfully', 201);
 
         } catch (Exception $e) {

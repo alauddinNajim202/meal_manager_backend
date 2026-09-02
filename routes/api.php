@@ -179,6 +179,31 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::get('/reports/my-bill', [ReportController::class, 'myBill']);
     Route::get('/transactions', [TransactionController::class, 'index']);
 
+    // ===== TEMPORARY: Seed Notifications =====
+    Route::get('/seed-notifications', function () {
+        \Illuminate\Support\Facades\DB::table('notifications')->truncate();
+        
+        $mess = \App\Models\Mess::first();
+        if (!$mess) {
+            return response()->json(['message' => 'No mess found! Create a mess first.']);
+        }
+        
+        $mess->notify(new \App\Notifications\MonthClosedNotification('July', 2026, 48.50));
+        $mess->notify(new \App\Notifications\NewMonthStartedNotification('August', 2026));
+        $mess->notify(new \App\Notifications\MoneyAddedNotification('Md Alamin', 2500));
+        $mess->notify(new \App\Notifications\BazarCostAddedNotification('Rony', 1200, 'Chicken, Rice, Vegetables'));
+        $mess->notify(new \App\Notifications\MealCountUpdatedNotification('2026-08-22', 'Rifat Rony', 2, 1));
+        $mess->notify(new \App\Notifications\BazarAssignedNotification('2026-08-23', 'Mehedi Hasan', 'Alamin'));
+        $mess->notify(new \App\Notifications\RolePromotedNotification('Rifat Rony'));
+        $mess->notify(new \App\Notifications\NewMemberJoinedNotification('Nahid Islam'));
+        
+        return response()->json(['message' => 'Dummy notifications seeded successfully for Mess ID: ' . $mess->id]);
+    });
+
+    // ===== Notifications =====
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/read-all', [NotificationController::class, 'readAll']);
+    Route::get('/notifications/{id}/read', [NotificationController::class, 'readSingle']);
     // ===== Write Routes (Manager only) =====
     Route::middleware(['mess.manager'])->group(function () {
         // Members

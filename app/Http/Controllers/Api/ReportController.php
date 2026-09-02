@@ -126,6 +126,18 @@ class ReportController extends Controller
                     ['total_meals' => $userTotalMeals, 'total_cost' => $userTotalCost, 'total_deposit' => $userDeposit, 'balance' => $balance]
                 );
             }
+            
+            // Dispatch notifications to the mess
+            $monthName = \Carbon\Carbon::create()->month($month)->format('F');
+            $nextMonthDate = \Carbon\Carbon::createFromDate($year, $month, 1)->addMonth();
+            $nextMonthName = $nextMonthDate->format('F');
+            $nextMonthYear = $nextMonthDate->format('Y');
+
+            $mess = \App\Models\Mess::find($messId);
+            if ($mess) {
+                $mess->notify(new \App\Notifications\MonthClosedNotification($monthName, $year, $mealRate));
+                $mess->notify(new \App\Notifications\NewMonthStartedNotification($nextMonthName, $nextMonthYear));
+            }
 
             return $this->success($report->load('userMonthlyBills.user:id,name'), 'Report generated successfully', 200);
 

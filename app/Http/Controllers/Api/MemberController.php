@@ -257,6 +257,12 @@ class MemberController extends Controller
 
 
             DB::commit();
+            
+            // Notify the mess
+            $mess = \App\Models\Mess::find($messId);
+            if ($mess) {
+                $mess->notify(new \App\Notifications\NewMemberJoinedNotification($member->name));
+            }
 
             return $this->success($data, 'Member added successfully', 201);
 
@@ -291,9 +297,6 @@ class MemberController extends Controller
             if (!$member) {
                 return $this->error(null, 'Member not found.', 404);
             }
-
-
-
 
             $belongsToMess = $member->messes()->where('mess_id', $messId)->exists();
             if (!$belongsToMess) {
@@ -410,6 +413,13 @@ class MemberController extends Controller
             
             // Update the users table role
             $member->update(['role' => $request->role]);
+
+            if ($request->role === 'manager') {
+                $mess = \App\Models\Mess::find($messId);
+                if ($mess) {
+                    $mess->notify(new \App\Notifications\RolePromotedNotification($member->name));
+                }
+            }
 
             return $this->success(null, "Role updated to '{$request->role}' successfully.", 200);
 

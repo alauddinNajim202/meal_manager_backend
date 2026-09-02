@@ -66,6 +66,14 @@ class DepositController extends Controller
                 'note'    => $request->note,
             ]);
 
+            // Notify the mess
+            $mess = \App\Models\Mess::find($user->current_mess_id);
+            $targetUser = \App\Models\User::find($request->user_id);
+            
+            if ($mess && $targetUser) {
+                $mess->notify(new \App\Notifications\MoneyAddedNotification($targetUser->name, $request->amount));
+            }
+
             return $this->success($deposit, 'Deposit added successfully', 201);
 
         } catch (Exception $e) {
