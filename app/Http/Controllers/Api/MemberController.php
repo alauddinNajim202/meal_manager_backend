@@ -20,7 +20,7 @@ class MemberController extends Controller
     /**
      * List all members of the current active mess.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth('api')->user();
 
@@ -31,13 +31,38 @@ class MemberController extends Controller
         $messId = $user->current_mess_id;
         $mess = Mess::find($messId);
 
-        // Calculate Meal Rate for the Mess
-        $allMessMeals = \App\Models\Meal::where('mess_id', $messId)->get();
-        $totalMessMeals = $allMessMeals->sum('breakfast') + $allMessMeals->sum('lunch') + $allMessMeals->sum('dinner');
+        $month = $request->month ?? \Carbon\Carbon::now()->month;
+        $year = $request->year ?? \Carbon\Carbon::now()->year;
+
+        // Current Month Meal Rate
+        $currentMonthMeals = \App\Models\Meal::where('mess_id', $messId)
+            ->whereMonth('date', $month)->whereYear('date', $year)->get();
+        $totalCurrentMonthMeals = $currentMonthMeals->sum('breakfast') + $currentMonthMeals->sum('lunch') + $currentMonthMeals->sum('dinner');
         
-        $totalMessExpense = \App\Models\Expense::where('mess_id', $messId)->sum('amount');
+        $totalCurrentMonthExpense = \App\Models\Expense::where('mess_id', $messId)
+            ->whereMonth('date', $month)->whereYear('date', $year)->sum('amount');
         
-        $mealRate = $totalMessMeals > 0 ? $totalMessExpense / $totalMessMeals : 0;
+        $currentMealRate = $totalCurrentMonthMeals > 0 ? $totalCurrentMonthExpense / $totalCurrentMonthMeals : 0;
+
+        // Previous Time Meal Rate (for calculating previous dues)
+        $previousMealsQuery = \App\Models\Meal::where('mess_id', $messId)
+            ->where(function($q) use ($month, $year) {
+                $q->whereYear('date', '<', $year)
+                  ->orWhere(function($q2) use ($month, $year) {
+                      $q2->whereYear('date', $year)->whereMonth('date', '<', $month);
+                  });
+            })->get();
+        $totalPreviousMeals = $previousMealsQuery->sum('breakfast') + $previousMealsQuery->sum('lunch') + $previousMealsQuery->sum('dinner');
+        
+        $totalPreviousExpense = \App\Models\Expense::where('mess_id', $messId)
+            ->where(function($q) use ($month, $year) {
+                $q->whereYear('date', '<', $year)
+                  ->orWhere(function($q2) use ($month, $year) {
+                      $q2->whereYear('date', $year)->whereMonth('date', '<', $month);
+                  });
+            })->sum('amount');
+
+        $previousMealRate = $totalPreviousMeals > 0 ? $totalPreviousExpense / $totalPreviousMeals : 0;
 
         $members = $mess->users()
             ->withPivot('role', 'status', 'nid', 'nid_front', 'nid_back', 'emergency_contact_phone', 'advance_amount', 'month', 'joining_date', 'room_rent', 'notes')
@@ -50,14 +75,38 @@ class MemberController extends Controller
                 }
             ])
             ->get()
-            ->map(function ($member) use ($mealRate) {
-                $totalMeals = $member->meals->sum(function ($meal) {
-                    return $meal->breakfast + $meal->lunch + $meal->dinner;
+            ->map(function ($member) use ($currentMealRate, $previousMealRate, $month, $year) {
+                // Current Month
+                $currentMeals = $member->meals->filter(function($meal) use ($month, $year) {
+                    $d = \Carbon\Carbon::parse($meal->date);
+                    return $d->month == $month && $d->year == $year;
                 });
+                $totalCurrentMeals = $currentMeals->sum(function($meal) { return $meal->breakfast + $meal->lunch + $meal->dinner; });
+                
+                $currentDeposits = $member->deposits->filter(function($dep) use ($month, $year) {
+                    $d = \Carbon\Carbon::parse($dep->date);
+                    return $d->month == $month && $d->year == $year;
+                })->sum('amount');
+                
+                $currentMealCost = round($totalCurrentMeals * $currentMealRate, 2);
+                $currentDues = round($currentMealCost - $currentDeposits, 2);
 
-                $totalDeposits = $member->deposits->sum('amount');
-                $totalExpenses = round($totalMeals * $mealRate, 2);
-                $totalDues = round($totalExpenses - $totalDeposits, 2);
+                // Previous Months
+                $previousUserMeals = $member->meals->filter(function($meal) use ($month, $year) {
+                    $d = \Carbon\Carbon::parse($meal->date);
+                    return $d->year < $year || ($d->year == $year && $d->month < $month);
+                });
+                $totalPrevMeals = $previousUserMeals->sum(function($meal) { return $meal->breakfast + $meal->lunch + $meal->dinner; });
+                
+                $prevDeposits = $member->deposits->filter(function($dep) use ($month, $year) {
+                    $d = \Carbon\Carbon::parse($dep->date);
+                    return $d->year < $year || ($d->year == $year && $d->month < $month);
+                })->sum('amount');
+
+                $prevMealCost = round($totalPrevMeals * $previousMealRate, 2);
+                $previousDues = round($prevMealCost - $prevDeposits, 2);
+
+                $totalDues = $currentDues + $previousDues;
 
                 return [
                     'id'     => $member->id,
@@ -77,10 +126,12 @@ class MemberController extends Controller
                     'role'   => $member->pivot->role,
                     'status' => $member->pivot->status,
                     'meal_account' => [
-                        'meal_rate' => $mealRate,
-                        'total_meals' => $totalMeals,
-                        'total_meal_cost' => $totalExpenses,
-                        'total_deposits' => $totalDeposits,
+                        'meal_rate' => $currentMealRate,
+                        'total_meals' => $totalCurrentMeals,
+                        'total_meal_cost' => $currentMealCost,
+                        'total_deposits' => $currentDeposits,
+                        'current_month_dues' => $currentDues,
+                        'previous_dues' => $previousDues,
                         'total_dues' => $totalDues,
                     ]
                 ];
@@ -90,14 +141,20 @@ class MemberController extends Controller
     }
 
 
-    public function show($id)
+    public function show(Request $request, $id)
     {   
         $user = auth('api')->user();
+        
+        $month = $request->month ?? \Carbon\Carbon::now()->month;
+        $year = $request->year ?? \Carbon\Carbon::now()->year;
 
         $member = User::where('id', $id)->
             with([
-                'meals' => function($query) use ($user) {
-                    $query->where('mess_id', $user->current_mess_id)->orderBy('date', 'desc');
+                'meals' => function($query) use ($user, $month, $year) {
+                    $query->where('mess_id', $user->current_mess_id)
+                          ->whereMonth('date', $month)
+                          ->whereYear('date', $year)
+                          ->orderBy('date', 'desc');
                 }
             ])
             ->first();

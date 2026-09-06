@@ -24,9 +24,10 @@ class ExpenseController extends Controller
 
         $query = Expense::where('mess_id', $user->current_mess_id)->with('user:id,name,avatar');
 
-        if ($request->has('month') && $request->has('year')) {
-            $query->whereMonth('date', $request->month)->whereYear('date', $request->year);
-        }
+        $month = $request->month ?? \Carbon\Carbon::now()->month;
+        $year = $request->year ?? \Carbon\Carbon::now()->year;
+
+        $query->whereMonth('date', $month)->whereYear('date', $year);
 
         return $this->success($query->latest('date')->get(), 'Expenses fetched successfully', 200);
     }

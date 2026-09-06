@@ -43,21 +43,20 @@ class MealController extends Controller
 
         $messId = $user->current_mess_id;
 
+        $month = $request->month ?? \Carbon\Carbon::now()->month;
+        $year = $request->year ?? \Carbon\Carbon::now()->year;
+
         // Get all members of current mess
         $members = User::whereHas('messes', function ($query) use ($messId) {
         $query->where('messes.id', $messId);
                 })
                 ->with([
-                    'meals' => function ($query) use ($messId, $request) {
+                    'meals' => function ($query) use ($messId, $request, $month, $year) {
                         $query->where('mess_id', $messId)
+                            ->whereMonth('date', $month)
+                            ->whereYear('date', $year)
                             ->when($request->day, function ($query) use ($request) {
                                 $query->whereDay('date', $request->day);
-                            })
-                            ->when($request->month, function ($query) use ($request) {
-                                $query->whereMonth('date', $request->month);
-                            })
-                            ->when($request->year, function ($query) use ($request) {
-                                $query->whereYear('date', $request->year);
                             });
                     }
                 ])
