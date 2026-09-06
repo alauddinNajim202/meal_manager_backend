@@ -203,6 +203,11 @@ class MessController extends Controller
                 return $this->error(null, 'You are not a member of this mess.', 403);
             }
 
+            // Owners cannot leave currently without transferring ownership
+            if ($pivot->pivot->role === 'owner') {
+                return $this->error(null, 'You are the owner. You cannot leave the mess. Please delete the mess or transfer ownership (feature coming soon).', 400);
+            }
+
             // Prevent leaving if user is the only manager
             if ($pivot->pivot->role === 'manager') {
                 $managerCount = Mess::find($messId)->managers()->count();

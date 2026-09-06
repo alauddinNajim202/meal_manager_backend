@@ -244,6 +244,6 @@ class BazarScheduleController extends Controller
         if (!$user->current_mess_id) return false;
 
         $pivot = $user->messes()->where('mess_id', $user->current_mess_id)->first();
-        return $pivot && $pivot->pivot->role === 'manager';
+        return $pivot && in_array($pivot->pivot->role, ['manager', 'owner']);
     }
 }

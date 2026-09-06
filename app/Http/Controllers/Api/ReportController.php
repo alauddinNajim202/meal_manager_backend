@@ -79,7 +79,7 @@ class ReportController extends Controller
 
         // Check if manager via pivot table
         $pivotRole = $user->messes()->where('mess_id', $user->current_mess_id)->first()?->pivot->role;
-        if ($pivotRole !== 'manager') {
+        if (!in_array($pivotRole, ['manager', 'owner'])) {
             return $this->error(null, 'Only managers can generate reports.', 403);
         }
 
