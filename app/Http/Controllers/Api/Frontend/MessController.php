@@ -70,14 +70,17 @@ class MessController extends Controller
                 'image' => $request->hasFile('image') ? Helper::fileUpload($request->image, 'messes', $request->name) : null,
             ]);
 
-            // Attach the creator as manager in the pivot table
+            // Attach the creator as owner in the pivot table
             $user->messes()->attach($mess->id, [
-                'role'   => 'manager',
+                'role'   => 'owner',
                 'status' => 'active',
             ]);
 
-            // Set this new mess as the user's current active mess
-            $user->update(['current_mess_id' => $mess->id]);
+            // Set this new mess as the user's current active mess and update role
+            $user->update([
+                'current_mess_id' => $mess->id,
+                'role'            => 'owner',
+            ]);
 
             DB::commit();
 
@@ -114,10 +117,10 @@ class MessController extends Controller
                 return $this->error(null, 'Mess not found', 404);
             }
 
-            // Only manager/owner can update
+            // Only owner can update
             $pivot = $user->messes()->where('mess_id', $mess->id)->first();
-            if (!$pivot || $pivot->pivot->role !== 'manager') {
-                return $this->error(null, 'Only managers can update mess.', 403);
+            if (!$pivot || $pivot->pivot->role !== 'owner') {
+                return $this->error(null, 'Only owners can update mess details.', 403);
             }
 
             $mess->update([

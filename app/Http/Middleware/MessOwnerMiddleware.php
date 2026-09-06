@@ -3,18 +3,19 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-class MessManagerMiddleware
+class MessOwnerMiddleware
 {
-    use ApiResponse;
+    use \App\Traits\ApiResponse;
 
     /**
-     * Only allow managers of the current mess to proceed.
-     * Members get a 403 Forbidden response.
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
         $user = auth('api')->user();
 
@@ -28,8 +29,8 @@ class MessManagerMiddleware
 
         $pivot = $user->messes()->where('mess_id', $user->current_mess_id)->first();
 
-        if (!$pivot || !in_array($pivot->pivot->role, ['manager', 'owner'])) {
-            return $this->error(null, 'Only managers and owners can perform this action.', 403);
+        if (!$pivot || $pivot->pivot->role !== 'owner') {
+            return $this->error(null, 'Only owners can perform this action.', 403);
         }
 
         return $next($request);

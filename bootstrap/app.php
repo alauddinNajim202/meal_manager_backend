@@ -63,6 +63,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission'            => PermissionMiddleware::class,
             'role_or_permission'    => RoleOrPermissionMiddleware::class,
             'mess.manager'          => MessManagerMiddleware::class,
+            'mess.owner'            => \App\Http\Middleware\MessOwnerMiddleware::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'payment/stripe/webhook',

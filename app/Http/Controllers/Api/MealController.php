@@ -129,6 +129,7 @@ class MealController extends Controller
             $messId = $user->current_mess_id;
 
             $savedMeals = [];
+            $mealDetails = [];
 
             foreach ($request->meals as $mealData) {
 
@@ -171,13 +172,19 @@ class MealController extends Controller
                         'is_guest' => $mealData['is_guest'] ?? false,
                     ]
                 );
-                
-                $mess = \App\Models\Mess::find($messId);
-                if ($mess) {
-                    $mess->notify(new \App\Notifications\MealCountUpdatedNotification($request->date, $targetUser->name, $mealData['lunch'], $mealData['dinner']));
-                }
-
                 $savedMeals[] = $meal;
+
+                // Collect details for notification
+                $breakfastText = $mealData['breakfast'] > 0 ? "+{$mealData['breakfast']}" : $mealData['breakfast'];
+                $lunchText = $mealData['lunch'] > 0 ? "+{$mealData['lunch']}" : $mealData['lunch'];
+                $dinnerText = $mealData['dinner'] > 0 ? "+{$mealData['dinner']}" : $mealData['dinner'];
+                $mealDetails[] = "{$targetUser->name} (B: {$breakfastText}, L: {$lunchText}, D: {$dinnerText})";
+            }
+            
+            $mess = \App\Models\Mess::find($messId);
+            if ($mess && !empty($mealDetails)) {
+                $detailsString = implode(', ', $mealDetails);
+                $mess->notify(new \App\Notifications\MealCountUpdatedNotification($request->date, $detailsString));
             }
 
             return $this->success(

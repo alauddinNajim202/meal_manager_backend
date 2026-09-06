@@ -12,19 +12,15 @@ class MealCountUpdatedNotification extends Notification
     use Queueable;
 
     protected $date;
-    protected $userName;
-    protected $lunchCount;
-    protected $dinnerCount;
+    protected $details;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($date, $userName, $lunchCount, $dinnerCount)
+    public function __construct($date, $details)
     {
         $this->date = $date;
-        $this->userName = $userName;
-        $this->lunchCount = $lunchCount > 0 ? "+{$lunchCount}" : $lunchCount;
-        $this->dinnerCount = $dinnerCount > 0 ? "+{$dinnerCount}" : $dinnerCount;
+        $this->details = $details;
     }
 
     /**
@@ -47,7 +43,7 @@ class MealCountUpdatedNotification extends Notification
         $formattedDate = \Carbon\Carbon::parse($this->date)->format('M d');
         return [
             'title' => 'Meal Count Updated',
-            'message' => "Manager updated meal for {$this->userName} on {$formattedDate} (Lunch: {$this->lunchCount}, Dinner: {$this->dinnerCount}).",
+            'message' => "Manager updated meals on {$formattedDate} for: {$this->details}",
             'category' => 'Meals',
             'icon' => 'utensils'
         ];

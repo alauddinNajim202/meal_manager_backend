@@ -303,6 +303,12 @@ class MemberController extends Controller
                 return $this->error(null, 'This user is not a member of your mess.', 404);
             }
 
+            // Cannot remove the owner
+            $targetPivot = $member->messes()->where('mess_id', $messId)->first();
+            if ($targetPivot && $targetPivot->pivot->role === 'owner') {
+                return $this->error(null, 'You cannot remove the owner of the mess.', 403);
+            }
+
             // Cannot remove yourself
             if ($member->id === $authUser->id) {
                 return $this->error(null, 'You cannot remove yourself.', 400);
@@ -341,6 +347,12 @@ class MemberController extends Controller
                 return $this->error(null, 'This user is not a member of your mess.', 404);
             }
 
+            // Cannot remove the owner
+            $targetPivot = $member->messes()->where('mess_id', $messId)->first();
+            if ($targetPivot && $targetPivot->pivot->role === 'owner') {
+                return $this->error(null, 'You cannot remove the owner of the mess.', 403);
+            }
+
             // Cannot remove yourself
             if ($member->id === $authUser->id) {
                 return $this->error(null, 'You cannot remove yourself. Use Leave Mess instead.', 400);
@@ -369,8 +381,8 @@ class MemberController extends Controller
     {
         $authUser = auth()->user();
 
-        if (!$this->isManagerOfCurrentMess($authUser)) {
-            return $this->error(null, 'Only managers can change roles.', 403);
+        if (!$this->isOwnerOfCurrentMess($authUser)) {
+            return $this->error(null, 'Only the mess owner can change roles.', 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -395,17 +407,29 @@ class MemberController extends Controller
                 return $this->error(null, 'This user is not a member of your mess.', 404);
             }
 
-            // If promoting to manager, demote everyone else in this mess first
+            // Ensure the target is not an owner
+            $targetPivot = $member->messes()->where('mess_id', $messId)->first();
+            if ($targetPivot && $targetPivot->pivot->role === 'owner') {
+                return $this->error(null, 'You cannot change the role of an owner.', 403);
+            }
+
+            // If promoting to manager, demote existing managers in this mess first (1 Manager rule)
             if ($request->role === 'manager') {
-                $userIdsInMess = DB::table('mess_user')->where('mess_id', $messId)->pluck('user_id');
-                
-                // Demote in pivot table
-                DB::table('mess_user')
+                $managerIdsInMess = DB::table('mess_user')
                     ->where('mess_id', $messId)
-                    ->update(['role' => 'member']);
-                    
-                // Demote in users table
-                User::whereIn('id', $userIdsInMess)->update(['role' => 'member']);
+                    ->where('role', 'manager')
+                    ->pluck('user_id');
+                
+                if ($managerIdsInMess->isNotEmpty()) {
+                    // Demote in pivot table
+                    DB::table('mess_user')
+                        ->where('mess_id', $messId)
+                        ->where('role', 'manager')
+                        ->update(['role' => 'member']);
+                        
+                    // Demote in users table
+                    User::whereIn('id', $managerIdsInMess)->update(['role' => 'member']);
+                }
             }
 
             // Update the pivot table role for the specific user
@@ -436,7 +460,18 @@ class MemberController extends Controller
         if (!$user->current_mess_id) return false;
 
         $pivot = $user->messes()->where('mess_id', $user->current_mess_id)->first();
-        return $pivot && $pivot->pivot->role === 'manager';
+        return $pivot && in_array($pivot->pivot->role, ['manager', 'owner']);
+    }
+
+    /**
+     * Check if the authenticated user is the owner of their current mess.
+     */
+    private function isOwnerOfCurrentMess(User $user): bool
+    {
+        if (!$user->current_mess_id) return false;
+
+        $pivot = $user->messes()->where('mess_id', $user->current_mess_id)->first();
+        return $pivot && $pivot->pivot->role === 'owner';
     }
 }
 
