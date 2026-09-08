@@ -143,8 +143,10 @@ class RegisterController extends Controller
             ]);
 
             // Send the new OTP to the user's phone
-            $message = "Meal Manager\nYour new OTP code is: {$newOtp}\nPlease use this to verify your account.";
-            \App\Helpers\SmsHelper::send($user->phone, $message);
+            if (!empty($user->phone)) {
+                $message = "Dear {$user->name},\nYour new OTP code for Mess Expert is: {$newOtp}\nPlease use this to verify your account.";
+                \App\Helpers\SmsHelper::send($user->phone, $message);
+            }
 
             return $this->success($user->only($this->select), 'A new OTP has been sent to your phone.', 200);
 

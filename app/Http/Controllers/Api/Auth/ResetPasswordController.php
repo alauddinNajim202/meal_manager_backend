@@ -37,8 +37,11 @@ class ResetPasswordController extends Controller
             $otp = rand(1000, 9999);
             $user = User::where('phone', $request->phone)->first();
 
-            // TODO: Send OTP via SMS or Email
-            // Mail::to($user->email)->send(new OtpMail($otp, $user, 'Reset Your Password'));
+            // Send OTP via SMS
+            if (!empty($user->phone)) {
+                $message = "Dear {$user->name},\nYou requested a password reset for Mess Expert.\nYour OTP code is: {$otp}\nIf you did not request this, please ignore this message.";
+                \App\Helpers\SmsHelper::send($user->phone, $message);
+            }
 
             $user->update([
                 'otp'            => $otp,
