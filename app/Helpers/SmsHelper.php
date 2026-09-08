@@ -34,10 +34,12 @@ class SmsHelper
             ]);
 
             if ($response->successful()) {
-                Log::info('BulkSMSBD SMS sent successfully to: ' . $number);
+                $body = $response->body();
+                Log::info('BulkSMSBD SMS API response: ' . $body);
+                // We will return true for now, but we should inspect the body in the logs
                 return true;
             } else {
-                Log::error('BulkSMSBD SMS failed. Response: ' . $response->body());
+                Log::error('BulkSMSBD SMS failed with HTTP error. Response: ' . $response->body());
                 return false;
             }
         } catch (\Exception $e) {
