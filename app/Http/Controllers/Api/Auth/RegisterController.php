@@ -52,10 +52,11 @@ class RegisterController extends Controller
                 'otp_verified_at' => null,
             ]);
 
-            // TODO: Send OTP via SMS to user's phone instead of email
-            // if (!empty($user->phone)) {
-            //     $this->bdSms($user->phone, "Your OTP is: {$user->otp}");
-            // }
+            // Send OTP via SMS
+            if (!empty($user->phone)) {
+                $message = "Dear {$user->name},\nWelcome to Mess Expert!\nYour OTP code is: {$user->otp}\nPlease use this to verify your account.";
+                \App\Helpers\SmsHelper::send($user->phone, $message);
+            }
 
             DB::commit();
 
@@ -141,8 +142,9 @@ class RegisterController extends Controller
                 'otp_expires_at' => now()->addMinutes(5),
             ]);
 
-            // TODO: Send the new OTP to the user's phone
-            // $this->bdSms($user->phone, "Your OTP is: {$newOtp}");
+            // Send the new OTP to the user's phone
+            $message = "Meal Manager\nYour new OTP code is: {$newOtp}\nPlease use this to verify your account.";
+            \App\Helpers\SmsHelper::send($user->phone, $message);
 
             return $this->success($user->only($this->select), 'A new OTP has been sent to your phone.', 200);
 
