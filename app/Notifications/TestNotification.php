@@ -25,7 +25,7 @@ class TestNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database', 'mail', \App\Channels\FirebaseChannel::class];
     }
 
     public function toMail(object $notifiable): MailMessage
