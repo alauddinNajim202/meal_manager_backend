@@ -321,11 +321,14 @@ class MemberController extends Controller
                 $mess->notify(new \App\Notifications\NewMemberJoinedNotification($member->name));
             }
             
+            $messName = $mess ? $mess->name : 'our mess';
+            
             if ($generatedPassword) {
-                $messName = $mess ? $mess->name : 'our mess';
                 $message = "Hello {$member->name},\nWelcome to {$messName}!\nYou have been added as a member.\n\nLogin Info:\nPhone: {$member->phone}\nPassword: {$generatedPassword}";
-                \App\Helpers\SmsHelper::send($member->phone, $message);
+            } else {
+                $message = "Hello {$member->name},\nWelcome to {$messName}!\nYou have been added as a member to this mess.";
             }
+            \App\Helpers\SmsHelper::send($member->phone, $message);
 
             return $this->success($data, 'Member added successfully', 201);
 
