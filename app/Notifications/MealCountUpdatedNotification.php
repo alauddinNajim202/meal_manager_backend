@@ -11,14 +11,16 @@ class MealCountUpdatedNotification extends Notification
 {
     use Queueable;
 
+    protected $user;
     protected $date;
     protected $details;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($date, $details)
+    public function __construct($user, $date, $details)
     {
+        $this->user = $user;
         $this->date = $date;
         $this->details = $details;
     }
@@ -43,7 +45,7 @@ class MealCountUpdatedNotification extends Notification
         $formattedDate = \Carbon\Carbon::parse($this->date)->format('M d');
         return [
             'title' => 'Meal Count Updated',
-            'message' => "Manager updated meals on {$formattedDate} for: {$this->details}",
+            'message' => "{$this->user->name} updated meals on {$formattedDate} for: {$this->details}",
             'category' => 'Meals',
             'icon' => 'utensils'
         ];

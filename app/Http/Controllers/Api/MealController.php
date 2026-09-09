@@ -183,7 +183,7 @@ class MealController extends Controller
             $mess = \App\Models\Mess::find($messId);
             if ($mess && !empty($mealDetails)) {
                 $detailsString = implode(', ', $mealDetails);
-                $mess->notify(new \App\Notifications\MealCountUpdatedNotification($request->date, $detailsString));
+                $mess->notify(new \App\Notifications\MealCountUpdatedNotification($user->name, $request->date, $detailsString));
             }
 
             return $this->success(
