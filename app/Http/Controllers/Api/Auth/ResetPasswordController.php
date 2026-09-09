@@ -39,7 +39,7 @@ class ResetPasswordController extends Controller
 
             // Send OTP via SMS
             if (!empty($user->phone)) {
-                $message = "Dear {$user->name},\nYou requested a password reset for Mess Expert.\nYour OTP code is: {$otp}\nIf you did not request this, please ignore this message.";
+                $message = "প্রিয় {$user->name},\nআপনি Mess Expert-এর পাসওয়ার্ড রিসেটের অনুরোধ করেছেন।\nআপনার ওটিপি কোড হলো: {$otp}\nযদি আপনি এটি না করে থাকেন, তবে মেসেজটি এড়িয়ে চলুন।";
                 \App\Helpers\SmsHelper::send($user->phone, $message);
             }
 

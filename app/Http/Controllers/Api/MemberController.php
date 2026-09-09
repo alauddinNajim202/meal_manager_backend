@@ -324,9 +324,9 @@ class MemberController extends Controller
             $messName = $mess ? $mess->name : 'our mess';
             
             if ($generatedPassword) {
-                $message = "Hello {$member->name},\nWelcome to {$messName}!\nYou have been added as a member.\n\nLogin Info:\nPhone: {$member->phone}\nPassword: {$generatedPassword}";
+                $message = "হ্যালো {$member->name},\n{$messName}-এ স্বাগতম!\nআপনাকে মেম্বার হিসেবে যুক্ত করা হয়েছে।\n\nলগইন তথ্য:\nফোন: {$member->phone}\nপাসওয়ার্ড: {$generatedPassword}";
             } else {
-                $message = "Hello {$member->name},\nWelcome to {$messName}!\nYou have been added as a member to this mess.";
+                $message = "হ্যালো {$member->name},\n{$messName}-এ স্বাগতম!\nআপনাকে এই মেসের মেম্বার হিসেবে যুক্ত করা হয়েছে।";
             }
             \App\Helpers\SmsHelper::send($member->phone, $message);
 

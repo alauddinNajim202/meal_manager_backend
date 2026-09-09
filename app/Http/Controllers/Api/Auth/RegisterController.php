@@ -54,7 +54,7 @@ class RegisterController extends Controller
 
             // Send OTP via SMS
             if (!empty($user->phone)) {
-                $message = "Dear {$user->name},\nWelcome to Mess Expert!\nYour OTP code is: {$user->otp}\nPlease use this to verify your account.";
+                $message = "প্রিয় {$user->name},\nMess Expert-এ স্বাগতম!\nআপনার ওটিপি কোড হলো: {$user->otp}\nদয়া করে এটি দিয়ে আপনার অ্যাকাউন্ট ভেরিফাই করুন।";
                 \App\Helpers\SmsHelper::send($user->phone, $message);
             }
 
@@ -144,7 +144,7 @@ class RegisterController extends Controller
 
             // Send the new OTP to the user's phone
             if (!empty($user->phone)) {
-                $message = "Dear {$user->name},\nYour new OTP code for Mess Expert is: {$newOtp}\nPlease use this to verify your account.";
+                $message = "প্রিয় {$user->name},\nMess Expert-এর জন্য আপনার নতুন ওটিপি কোড হলো: {$newOtp}\nদয়া করে এটি দিয়ে আপনার অ্যাকাউন্ট ভেরিফাই করুন।";
                 \App\Helpers\SmsHelper::send($user->phone, $message);
             }
 
