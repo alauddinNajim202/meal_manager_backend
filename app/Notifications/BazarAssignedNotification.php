@@ -46,9 +46,9 @@ class BazarAssignedNotification extends Notification
             ? "tomorrow's" 
             : \Carbon\Carbon::parse($this->date)->format('M d') . "'s";
             
-        $message = "{$this->userName} is scheduled for {$formattedDate} Bazar duty";
+        $message = "<b>{$this->userName}</b> is scheduled for <b>{$formattedDate}</b> Bazar duty";
         if ($this->partnerName) {
-            $message .= " with {$this->partnerName}";
+            $message .= " with <b>{$this->partnerName}</b>";
         }
         $message .= ".";
 

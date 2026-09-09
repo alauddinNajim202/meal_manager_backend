@@ -45,7 +45,7 @@ class MealCountUpdatedNotification extends Notification
         $formattedDate = \Carbon\Carbon::parse($this->date)->format('M d');
         return [
             'title' => 'Meal Count Updated',
-            'message' => "{$this->user} updated meals on {$formattedDate} for: {$this->details}",
+            'message' => "<b>{$this->user}</b> updated meals on <b>{$formattedDate}</b> for: <b>{$this->details}</b>",
             'category' => 'Meals',
             'icon' => 'utensils'
         ];

@@ -44,7 +44,7 @@ class MonthClosedNotification extends Notification
     {
         return [
             'title' => "Month Closed ({$this->monthName} {$this->year})",
-            'message' => "{$this->monthName} month settlement completed! Meal rate: ৳{$this->mealRate}. Check your final balance.",
+            'message' => "<b>{$this->monthName}</b> month settlement completed! Meal rate: <b>৳{$this->mealRate}</b>. Check your final balance.",
             'category' => 'Month End',
             'icon' => 'refresh-cw'
         ];

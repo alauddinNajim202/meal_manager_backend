@@ -42,7 +42,7 @@ class NewMonthStartedNotification extends Notification
     {
         return [
             'title' => 'New Month Started',
-            'message' => "{$this->monthName} {$this->year} month cycle is now active. Add initial deposits.",
+            'message' => "<b>{$this->monthName} {$this->year}</b> month cycle is now active. Add initial deposits.",
             'category' => 'Month End',
             'icon' => 'calendar'
         ];

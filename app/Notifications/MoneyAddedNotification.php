@@ -42,7 +42,7 @@ class MoneyAddedNotification extends Notification
     {
         return [
             'title' => 'Money Added',
-            'message' => "{$this->userName} deposited ৳{$this->amount} to mess fund.",
+            'message' => "<b>{$this->userName}</b> deposited <b>৳{$this->amount}</b> to mess fund.",
             'category' => 'Money & Cost',
             'icon' => 'wallet'
         ];

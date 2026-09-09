@@ -40,7 +40,7 @@ class NewMemberJoinedNotification extends Notification
     {
         return [
             'title' => 'New Member Joined',
-            'message' => "{$this->memberName} has joined the mess.",
+            'message' => "<b>{$this->memberName}</b> has joined the mess.",
             'category' => 'Members',
             'icon' => 'user-plus'
         ];

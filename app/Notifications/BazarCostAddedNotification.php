@@ -42,9 +42,9 @@ class BazarCostAddedNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        $message = "{$this->userName} added Bazar Cost of ৳{$this->amount}";
+        $message = "<b>{$this->userName}</b> added Bazar Cost of <b>৳{$this->amount}</b>";
         if ($this->items) {
-            $message .= " ({$this->items})";
+            $message .= " (<i>{$this->items}</i>)";
         }
         $message .= ".";
 

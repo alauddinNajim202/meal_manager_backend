@@ -40,7 +40,7 @@ class RolePromotedNotification extends Notification
     {
         return [
             'title' => 'Role Promoted',
-            'message' => "{$this->promotedUserName} was promoted to Mess Manager.",
+            'message' => "<b>{$this->promotedUserName}</b> was promoted to Mess Manager.",
             'category' => 'Members',
             'icon' => 'shield'
         ];
