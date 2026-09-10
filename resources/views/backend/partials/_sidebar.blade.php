@@ -65,6 +65,13 @@ use Illuminate\Support\Facades\Route;
                 </li>
                 @role('admin')
                 <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('admin.push_notification.*') ? 'has-link active' : '' }}"
+                        href="{{ route('admin.push_notification.index') }}">
+                        <i class="fa-solid fa-bell side-menu__icon"></i>
+                        <span class="side-menu__label">Push Notification</span>
+                    </a>
+                </li>
+                <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('admin.setting.*') ? 'has-link active' : '' }}"
                         data-bs-toggle="slide" href="#">
                         <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 512 512">

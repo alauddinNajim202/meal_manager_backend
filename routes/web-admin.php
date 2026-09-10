@@ -314,6 +314,14 @@ Route::group(['middleware' => ['web-admin']], function () {
     })->name('optimize');
 
     /*
+    * Push Notification Route
+    */
+    Route::controller(\App\Http\Controllers\Web\Backend\PushNotificationController::class)->prefix('push-notification')->name('push_notification.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/send', 'send')->name('send');
+    });
+
+    /*
     * Property Route
     */
     Route::controller(\App\Http\Controllers\Web\Backend\PropertyController::class)->prefix('property')->name('property.')->group(function () {
