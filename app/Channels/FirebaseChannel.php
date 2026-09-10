@@ -18,11 +18,13 @@ class FirebaseChannel
      */
     public function send(object $notifiable, Notification $notification): void
     {
-        if (!method_exists($notification, 'toArray')) {
+        if (method_exists($notification, 'toFirebase')) {
+            $data = $notification->toFirebase($notifiable);
+        } elseif (method_exists($notification, 'toArray')) {
+            $data = $notification->toArray($notifiable);
+        } else {
             return;
         }
-
-        $data = $notification->toArray($notifiable);
         
         // Ensure there's actually a message to send
         if (empty($data['message']) && empty($data['title'])) {
