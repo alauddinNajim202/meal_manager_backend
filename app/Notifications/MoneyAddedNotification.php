@@ -47,4 +47,17 @@ class MoneyAddedNotification extends Notification
             'icon' => 'wallet'
         ];
     }
+
+    /**
+     * Get the push notification representation.
+     */
+    public function toFirebase(object $notifiable): array
+    {
+        return [
+            'title' => '💰 Fund Received',
+            'message' => "৳{$this->amount} has been credited to the mess fund by {$this->userName}.",
+            'category' => 'Money & Cost',
+            'icon' => 'wallet'
+        ];
+    }
 }

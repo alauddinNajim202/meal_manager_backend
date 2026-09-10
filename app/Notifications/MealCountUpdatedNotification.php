@@ -50,4 +50,18 @@ class MealCountUpdatedNotification extends Notification
             'icon' => 'utensils'
         ];
     }
+
+    /**
+     * Get the push notification representation.
+     */
+    public function toFirebase(object $notifiable): array
+    {
+        $formattedDate = \Carbon\Carbon::parse($this->date)->format('M d');
+        return [
+            'title' => '🍽️ Daily Meals Updated',
+            'message' => "{$this->user} has just logged the meals for {$formattedDate}. Tap to check yours!",
+            'category' => 'Meals',
+            'icon' => 'utensils'
+        ];
+    }
 }

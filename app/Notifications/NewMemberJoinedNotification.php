@@ -45,4 +45,17 @@ class NewMemberJoinedNotification extends Notification
             'icon' => 'user-plus'
         ];
     }
+
+    /**
+     * Get the push notification representation.
+     */
+    public function toFirebase(object $notifiable): array
+    {
+        return [
+            'title' => '👋 New Roommate!',
+            'message' => "Say hello to {$this->memberName}, they just joined the mess!",
+            'category' => 'Members',
+            'icon' => 'user-plus'
+        ];
+    }
 }

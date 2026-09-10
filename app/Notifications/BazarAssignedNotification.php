@@ -59,4 +59,26 @@ class BazarAssignedNotification extends Notification
             'icon' => 'shopping-cart'
         ];
     }
+
+    /**
+     * Get the push notification representation.
+     */
+    public function toFirebase(object $notifiable): array
+    {
+        $formattedDate = \Carbon\Carbon::parse($this->date)->isTomorrow() 
+            ? "Tomorrow" 
+            : \Carbon\Carbon::parse($this->date)->format('M d');
+            
+        $message = "Hey {$this->userName}, you're on Bazar duty {$formattedDate}!";
+        if ($this->partnerName) {
+            $message .= " (Partner: {$this->partnerName})";
+        }
+
+        return [
+            'title' => '🛒 Bazar Duty Alert',
+            'message' => $message,
+            'category' => 'Bazar',
+            'icon' => 'shopping-cart'
+        ];
+    }
 }

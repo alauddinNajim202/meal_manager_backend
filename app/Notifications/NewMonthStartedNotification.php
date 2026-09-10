@@ -47,4 +47,17 @@ class NewMonthStartedNotification extends Notification
             'icon' => 'calendar'
         ];
     }
+
+    /**
+     * Get the push notification representation.
+     */
+    public function toFirebase(object $notifiable): array
+    {
+        return [
+            'title' => "📅 {$this->monthName} {$this->year} Started",
+            'message' => "A new mess month has begun. Please submit your initial deposits.",
+            'category' => 'Month End',
+            'icon' => 'calendar'
+        ];
+    }
 }

@@ -45,4 +45,17 @@ class RolePromotedNotification extends Notification
             'icon' => 'shield'
         ];
     }
+
+    /**
+     * Get the push notification representation.
+     */
+    public function toFirebase(object $notifiable): array
+    {
+        return [
+            'title' => '👑 New Mess Manager',
+            'message' => "{$this->promotedUserName} is now a Mess Manager! Expect new rules 😉",
+            'category' => 'Members',
+            'icon' => 'shield'
+        ];
+    }
 }

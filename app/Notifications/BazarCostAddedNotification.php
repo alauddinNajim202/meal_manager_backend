@@ -55,4 +55,24 @@ class BazarCostAddedNotification extends Notification
             'icon' => 'shopping-bag'
         ];
     }
+
+    /**
+     * Get the push notification representation.
+     */
+    public function toFirebase(object $notifiable): array
+    {
+        $message = "{$this->userName} spent ৳{$this->amount} for Bazar";
+        if ($this->items) {
+            $message .= " ({$this->items}).";
+        } else {
+            $message .= ".";
+        }
+
+        return [
+            'title' => '🛍️ New Bazar Expense',
+            'message' => $message,
+            'category' => 'Money & Cost',
+            'icon' => 'shopping-bag'
+        ];
+    }
 }

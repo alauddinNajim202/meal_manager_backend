@@ -49,4 +49,17 @@ class MonthClosedNotification extends Notification
             'icon' => 'refresh-cw'
         ];
     }
+
+    /**
+     * Get the push notification representation.
+     */
+    public function toFirebase(object $notifiable): array
+    {
+        return [
+            'title' => "📊 Month End: {$this->monthName} {$this->year}",
+            'message' => "Settlement done! Final meal rate is ৳{$this->mealRate}. Tap to view your balance.",
+            'category' => 'Month End',
+            'icon' => 'refresh-cw'
+        ];
+    }
 }
