@@ -156,6 +156,7 @@ use App\Http\Controllers\Api\MealController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\BazarScheduleController;
+use App\Http\Controllers\Api\PollController;
 
 Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
@@ -178,6 +179,10 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::get('/reports', [ReportController::class, 'index']);
     Route::get('/reports/my-bill', [ReportController::class, 'myBill']);
     Route::get('/transactions', [TransactionController::class, 'index']);
+
+    // ===== Polls (Members + Managers) =====
+    Route::get('/polls/list', [PollController::class, 'index']);
+    Route::post('/polls/vote', [PollController::class, 'vote']);
 
     // ===== TEMPORARY: Seed Notifications =====
     Route::get('/seed-notifications', function () {
@@ -232,5 +237,10 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
         // Reports
         Route::post('/reports/generate', [ReportController::class, 'generate']);
+
+        // Polls (Managers only)
+        Route::post('/polls/store', [PollController::class, 'store']);
+        Route::post('/polls/close', [PollController::class, 'close']);
+        Route::delete('/polls/{id}', [PollController::class, 'destroy']);
     });
 });

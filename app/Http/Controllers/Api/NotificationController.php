@@ -70,13 +70,23 @@ class NotificationController extends Controller
                     'created_at' => \Carbon\Carbon::parse($notification->created_at)->diffForHumans(['short' => true]),
                     'updated_at' => \Carbon\Carbon::parse($notification->updated_at)->diffForHumans(['short' => true]),
                 ];
+                
             });
 
+            $unreadCount = $notifications->where('read_at', null)->count();
+
+
+            
+
             return response()->json([
-                'status'     => true,
-                'message'    => 'Notifications fetched successfully',
-                'code'       => 200,
-                'data'       => $notifications,
+                'status'       => true,
+                'message'      => 'Notifications fetched successfully',
+                'code'         => 200,
+                'data'         => [
+                    'unreadCount'   => $unreadCount,
+                    'hasUnread'     => $unreadCount > 0,
+                    'notifications' => $notifications,
+                ],
             ], 200);
         } catch (Exception $e) {
             Log::error($e->getMessage());
