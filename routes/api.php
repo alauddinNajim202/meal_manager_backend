@@ -115,6 +115,7 @@ Route::middleware(['auth:api'])->controller(NotificationController::class)->pref
     Route::get('test', 'test');
     Route::get('/', 'index');
     Route::get('status/read/all', 'readAll');
+    Route::post('status/read-multiple', 'readMultiple');
     Route::get('status/read/{id}', 'readSingle');
 });
 
@@ -208,6 +209,7 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     // ===== Notifications =====
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::get('/notifications/read-all', [NotificationController::class, 'readAll']);
+    Route::post('/notifications/read-multiple', [NotificationController::class, 'readMultiple']);
     Route::get('/notifications/{id}/read', [NotificationController::class, 'readSingle']);
     // ===== Write Routes (Manager only) =====
     Route::middleware(['mess.manager'])->group(function () {

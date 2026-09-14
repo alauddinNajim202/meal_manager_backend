@@ -145,4 +145,38 @@ class NotificationController extends Controller
         }
     }
 
+    public function readMultiple(Request $request)
+    {
+        try {
+            $user = auth('api')->user();
+            if ($user->current_mess_id) {
+                $mess = \App\Models\Mess::find($user->current_mess_id);
+                $ids = $request->input('ids'); // array of notification IDs
+                if (is_array($ids) && count($ids) > 0) {
+                    $mess->unreadNotifications()->whereIn('id', $ids)->update(['read_at' => now()]);
+                }
+                return response()->json([
+                    'status'     => true,
+                    'message'    => 'Multiple Notifications Marked As Read',
+                    'code'       => 200,
+                    'data'       => null
+                ], 200);
+            }
+            return response()->json([
+                'status'     => false,
+                'message'    => 'No active mess',
+                'code'       => 400
+            ], 400);
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+            return response()->json([
+                'status'     => false,
+                'message'    => 'Something went wrong',
+                'code'       => 500,
+                'error'      => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }
+
