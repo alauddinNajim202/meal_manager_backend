@@ -158,6 +158,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\BazarScheduleController;
 use App\Http\Controllers\Api\PollController;
+use App\Http\Controllers\Api\NoticeController;
 
 Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
@@ -184,6 +185,9 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     // ===== Polls (Members + Managers) =====
     Route::get('/polls/list', [PollController::class, 'index']);
     Route::post('/polls/vote', [PollController::class, 'vote']);
+
+    // ===== Notices (Members + Managers) =====
+    Route::get('/notices/list', [NoticeController::class, 'index']);
 
     // ===== TEMPORARY: Seed Notifications =====
     Route::get('/seed-notifications', function () {
@@ -244,5 +248,10 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
         Route::post('/polls/store', [PollController::class, 'store']);
         Route::post('/polls/close', [PollController::class, 'close']);
         Route::delete('/polls/{id}', [PollController::class, 'destroy']);
+
+        // Notices (Managers only)
+        Route::post('/notices/store', [NoticeController::class, 'store']);
+        Route::post('/notices/update/{id}', [NoticeController::class, 'update']);
+        Route::delete('/notices/{id}', [NoticeController::class, 'destroy']);
     });
 });
