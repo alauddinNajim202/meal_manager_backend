@@ -1,0 +1,33 @@
+name: Deploy to EC2 via Docker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2 Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # Navigate to the project directory
+            cd ${{ secrets.PROJECT_PATH }} || exit 1
+            
+            # Pull latest changes from git
+            git pull origin main
+            
+            # Rebuild the Docker image and start the container
+            docker-compose up -d --build
+            
+            # Run database migrations
+            docker-compose exec -T app php artisan migrate --force
+            
+            # Clear caches
+            docker-compose exec -T app php artisan optimize:clear

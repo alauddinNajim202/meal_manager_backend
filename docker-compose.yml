@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: meal_manager_backend:latest
+    container_name: meal_manager_backend
+    restart: always
+    ports:
+      - "8000:80"
+    volumes:
+      - ./.env:/var/www/html/.env
+      - ./storage/app/public:/var/www/html/storage/app/public
+      - ./storage/logs:/var/www/html/storage/logs
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  db:
+    image: mysql:8.0
+    container_name: meal_manager_db
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-meal_manager}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_USER: ${DB_USERNAME:-meal_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  dbdata:
