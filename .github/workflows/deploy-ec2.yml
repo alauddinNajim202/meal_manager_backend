@@ -24,10 +24,10 @@ jobs:
             git pull origin main
             
             # Rebuild the Docker image and start the container
-            docker-compose up -d --build
+            docker compose up -d --build
             
             # Run database migrations
-            docker-compose exec -T app php artisan migrate --force
+            docker compose exec -T app php artisan migrate --force
             
             # Clear caches
-            docker-compose exec -T app php artisan optimize:clear
+            docker compose exec -T app php artisan optimize:clear
