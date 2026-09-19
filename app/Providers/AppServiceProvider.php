@@ -20,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (config('app.env') !== 'local') {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         $clientId       = config('services.apple.client_id');
         $teamId         = config('services.apple.team_id');
         $keyId          = config('services.apple.key_id');
