@@ -27,6 +27,9 @@ jobs:
             git config --global --add safe.directory ${{ secrets.PROJECT_PATH }}
             git pull origin main
             
+            # Free up space by removing unused docker images and cache
+            docker system prune -af
+            
             # Rebuild the Docker image and start the container
             docker compose up -d --build
             
