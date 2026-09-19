@@ -33,6 +33,9 @@ jobs:
             # Rebuild the Docker image and start the container
             docker compose up -d --build
             
+            # Wait 15 seconds for MySQL database to fully boot up
+            sleep 15
+            
             # Clear caches before migration to load new .env variables
             docker compose exec -T app php artisan optimize:clear
             
