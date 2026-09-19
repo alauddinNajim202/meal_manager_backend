@@ -21,6 +21,7 @@ jobs:
             cd ${{ secrets.PROJECT_PATH }} || exit 1
             
             # Pull latest changes from git
+            git config --global --add safe.directory ${{ secrets.PROJECT_PATH }}
             git pull origin main
             
             # Rebuild the Docker image and start the container

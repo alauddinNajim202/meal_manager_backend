@@ -15,6 +15,3 @@
 /.idea
 /.vscode
 *.md
-docker-compose.yml
-Dockerfile
-vhost.conf
