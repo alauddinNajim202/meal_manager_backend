@@ -20,6 +20,9 @@ jobs:
             # Navigate to the project directory
             cd ${{ secrets.PROJECT_PATH }} || exit 1
             
+            # Fix directory permissions automatically
+            sudo chown -R $USER:$USER .
+            
             # Pull latest changes from git
             git config --global --add safe.directory ${{ secrets.PROJECT_PATH }}
             git pull origin main
