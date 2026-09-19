@@ -36,6 +36,10 @@ jobs:
             # Wait 15 seconds for MySQL database to fully boot up
             sleep 15
             
+            # Debug: Check if db container is running and check its logs
+            docker compose ps
+            docker compose logs db
+            
             # Clear caches before migration to load new .env variables
             docker compose exec -T app php artisan optimize:clear
             
