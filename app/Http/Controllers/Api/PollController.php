@@ -40,6 +40,9 @@ class PollController extends Controller
                 return [
                     'id' => $poll->id,
                     'title' => $poll->title,
+                    'meal_type' => $poll->meal_type,
+                    'duration_hours' => $poll->duration_hours,
+                    'expires_at' => $poll->expires_at,
                     'date' => $poll->date,
                     'status' => $poll->status,
                     'created_by' => $poll->creator,
@@ -68,8 +71,10 @@ class PollController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
+            'meal_type' => 'required|string|in:Breakfast,Lunch,Dinner,Both (Lunch & Dinner),Special Feast',
+            'duration_hours' => 'required|integer|in:3,4,6,24',
             'date' => 'nullable|date',
-            'options' => 'required|array|min:2',
+            'options' => 'required|array|min:2|max:6',
             'options.*' => 'required|string|max:100',
         ]);
 
@@ -84,6 +89,9 @@ class PollController extends Controller
                 'mess_id' => $messId,
                 'created_by' => $user->id,
                 'title' => $request->title,
+                'meal_type' => $request->meal_type,
+                'duration_hours' => $request->duration_hours,
+                'expires_at' => now()->addHours($request->duration_hours),
                 'date' => $request->date,
                 'status' => 'active',
             ]);
