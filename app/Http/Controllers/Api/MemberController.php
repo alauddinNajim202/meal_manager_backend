@@ -240,10 +240,11 @@ class MemberController extends Controller
                 $generatedPassword = null;
             } else {
                 // Create a new user account with auto-generated password
-                $email = $request->email ?? $request->name . rand(1000, 9999) . '@gmail.com';
+                $generatedEmailName = strtolower(str_replace(' ', '', $request->name));
+                $email = $request->email ?? $generatedEmailName . rand(1000, 9999) . '@gmail.com';
 
                 if (User::where('email', $email)->exists()) {
-                    $email = $request->name . rand(1000, 9999) . '@gmail.com';
+                    $email = $generatedEmailName . rand(1000, 9999) . '@gmail.com';
                 }
 
                 // Generate a readable password

@@ -44,7 +44,7 @@ class RegisterController extends Controller
             $user = User::create([
                 'name'            => $request->name,
                 'slug'            => Str::slug($request->name) . '-' . uniqid(),
-                'email'           => 'user' . rand(1000, 9999) . '@example.com',
+                'email'           => strtolower(str_replace(' ', '', $request->name)) . rand(1000, 9999) . '@gmail.com',
                 'phone'           => $request->phone,
                 'password'        => Hash::make($request->password),
                 'otp'             => rand(1000, 9999),
