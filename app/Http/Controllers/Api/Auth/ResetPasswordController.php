@@ -39,7 +39,7 @@ class ResetPasswordController extends Controller
 
             // Send OTP via SMS
             if (!empty($user->phone)) {
-                $message = "প্রিয় {$user->name},\nআপনি Mess Expert-এর পাসওয়ার্ড রিসেটের অনুরোধ করেছেন।\nআপনার ওটিপি কোড হলো: {$otp}\nযদি আপনি এটি না করে থাকেন, তবে মেসেজটি এড়িয়ে চলুন।";
+                $message = "প্রিয় ইউজার,\nআপনার পাসওয়ার্ড রিসেট করার ওটিপি কোড: {$otp}\n\nমোবাইল অ্যাপ ডাউনলোড করতে লিংকে ক্লিক করুন: https://play.google.com/store/apps/details?id=com.messExpert.app\n\nসাপোর্টের জন্য ফেসবুক গ্রুপ থেকে হেল্প নিতে ক্লিক করুন: https://www.facebook.com/share/19rJwcxX1a";
                 \App\Helpers\SmsHelper::send($user->phone, $message);
             }
 

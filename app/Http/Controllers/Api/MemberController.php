@@ -324,9 +324,9 @@ class MemberController extends Controller
             $messName = $mess ? $mess->name : 'our mess';
             
             if ($generatedPassword) {
-                $message = "হ্যালো {$member->name},\n{$messName}-এ স্বাগতম!\nআপনাকে মেম্বার হিসেবে যুক্ত করা হয়েছে।\n\nলগইন তথ্য:\nফোন: {$member->phone}\nপাসওয়ার্ড: {$generatedPassword}";
+                $message = "প্রিয় {$member->name},\nআপনাকে '{$messName}' মেসে যুক্ত করা হয়েছে।\n\nলগইন তথ্য:\nফোন: {$member->phone}\nপাসওয়ার্ড: {$generatedPassword}\n\nমোবাইল অ্যাপ ডাউনলোড করতে লিংকে ক্লিক করুন: https://play.google.com/store/apps/details?id=com.messExpert.app\n\nসাপোর্টের জন্য ফেসবুক গ্রুপ থেকে হেল্প নিতে ক্লিক করুন: https://www.facebook.com/share/19rJwcxX1a";
             } else {
-                $message = "হ্যালো {$member->name},\n{$messName}-এ স্বাগতম!\nআপনাকে এই মেসের মেম্বার হিসেবে যুক্ত করা হয়েছে।";
+                $message = "প্রিয় {$member->name},\nআপনাকে '{$messName}' মেসে যুক্ত করা হয়েছে। বিস্তারিত দেখতে অ্যাপে লগইন করুন।\n\nমোবাইল অ্যাপ ডাউনলোড করতে লিংকে ক্লিক করুন: https://play.google.com/store/apps/details?id=com.messExpert.app\n\nসাপোর্টের জন্য ফেসবুক গ্রুপ থেকে হেল্প নিতে ক্লিক করুন: https://www.facebook.com/share/19rJwcxX1a";
             }
             \App\Helpers\SmsHelper::send($member->phone, $message);
 

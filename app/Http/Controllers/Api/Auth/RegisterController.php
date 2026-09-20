@@ -54,7 +54,7 @@ class RegisterController extends Controller
 
             // Send OTP via SMS
             if (!empty($user->phone)) {
-                $message = "প্রিয় {$user->name},\nMess Expert-এ স্বাগতম!\nআপনার ওটিপি কোড হলো: {$user->otp}\nদয়া করে এটি দিয়ে আপনার অ্যাকাউন্ট ভেরিফাই করুন।";
+                $message = "প্রিয় {$user->name}, Mess Expert-এ স্বাগতম!\nআপনার ওটিপি কোড: {$user->otp}\n\nমোবাইল অ্যাপ ডাউনলোড করতে লিংকে ক্লিক করুন: https://play.google.com/store/apps/details?id=com.messExpert.app\n\nসাপোর্টের জন্য ফেসবুক গ্রুপ থেকে হেল্প নিতে ক্লিক করুন: https://www.facebook.com/share/19rJwcxX1a";
                 \App\Helpers\SmsHelper::send($user->phone, $message);
             }
 
@@ -144,7 +144,7 @@ class RegisterController extends Controller
 
             // Send the new OTP to the user's phone
             if (!empty($user->phone)) {
-                $message = "প্রিয় {$user->name},\nMess Expert-এর জন্য আপনার নতুন ওটিপি কোড হলো: {$newOtp}\nদয়া করে এটি দিয়ে আপনার অ্যাকাউন্ট ভেরিফাই করুন।";
+                $message = "প্রিয় {$user->name},\nআপনার নতুন ওটিপি কোড: {$newOtp}\n\nমোবাইল অ্যাপ ডাউনলোড করতে লিংকে ক্লিক করুন: https://play.google.com/store/apps/details?id=com.messExpert.app\n\nসাপোর্টের জন্য ফেসবুক গ্রুপ থেকে হেল্প নিতে ক্লিক করুন: https://www.facebook.com/share/19rJwcxX1a";
                 \App\Helpers\SmsHelper::send($user->phone, $message);
             }
 
