@@ -52,6 +52,7 @@
                                             <th>Slug</th>
                                             <th>Roles</th>
                                             <th>Guard</th>
+                                            <th>Last Active</th>
                                             <th>Created</th>
                                             <th class="text-center">Action</th>
                                         </tr>
@@ -77,6 +78,13 @@
                                                 @empty
                                                 <span class="badge rounded-pill bg-primary">N/A</span>
                                                 @endforelse
+                                            </td>
+                                            <td>
+                                                @if($user->last_activity_at)
+                                                    <span class="badge bg-success">{{ \Carbon\Carbon::parse($user->last_activity_at)->diffForHumans() }}</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Never</span>
+                                                @endif
                                             </td>
                                             <td>{{ \Carbon\Carbon::parse($user->created_at)->format('d-m-Y') }}</td>
                                             <td class="text-center">
