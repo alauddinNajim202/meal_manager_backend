@@ -380,12 +380,16 @@ class MemberController extends Controller
                 return $this->error(null, 'You cannot remove yourself.', 400);
             }
 
-            // Permanently delete the user account and associated data
-            // (Meals, deposits, etc. should ideally be deleted via cascading foreign keys, or manually here if needed)
-            $member->messes()->detach();
-            $member->delete();
+            // Detach from pivot table (account remains intact)
+            $member->messes()->detach($messId);
 
-            return $this->success(null, 'Member removed completely successfully.', 200);
+            // If this was their active mess, clear it
+            if ($member->current_mess_id == $messId) {
+                $nextMess = $member->messes()->first();
+                $member->update(['current_mess_id' => $nextMess?->id]);
+            }
+
+            return $this->success(null, 'Member removed from mess successfully.', 200);
 
         } catch (Exception $e) {
             return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
