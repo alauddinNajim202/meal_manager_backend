@@ -72,7 +72,7 @@ class PollController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'meal_type' => 'required|string|in:Breakfast,Lunch,Dinner,Both (Lunch & Dinner),Special Feast',
-            'duration_hours' => 'required|integer|in:3,4,6,24',
+            'duration_hours' => 'required|integer',
             'date' => 'nullable|date',
             'options' => 'required|array|min:2|max:6',
             'options.*' => 'required|string|max:100',
