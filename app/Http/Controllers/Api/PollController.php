@@ -105,6 +105,12 @@ class PollController extends Controller
 
             DB::commit();
 
+            // Notify all members of the mess about the new poll
+            $mess = \App\Models\Mess::find($messId);
+            if ($mess) {
+                $mess->notify(new \App\Notifications\NewPollCreatedNotification($poll->title));
+            }
+
             return $this->success($poll->load('options'), 'Poll created successfully.', 201);
         } catch (Exception $e) {
             DB::rollBack();
