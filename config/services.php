@@ -48,12 +48,4 @@ return [
         'timeout' => env('CHATBOT_TIMEOUT', 30),
     ],
 
-    'apple' => [
-        'client_id' => env('APPLE_CLIENT_ID'),
-        'team_id' => env('APPLE_TEAM_ID'),
-        'key_id' => env('APPLE_KEY_ID'),
-        'private_key_path' => env('APPLE_PRIVATE_KEY_PATH'),
-        'redirect' => env('APPLE_REDIRECT_URI'),
-    ]
-
 ];
