@@ -1,9 +1,5 @@
 <?php
 
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\RegisterController;
@@ -11,21 +7,22 @@ use App\Http\Controllers\Api\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\Auth\SocialLoginController;
 use App\Http\Controllers\Api\Auth\UserController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\FavouriteController;
 use App\Http\Controllers\Api\FirebaseTokenController;
 use App\Http\Controllers\Api\Frontend\CategoryController;
 use App\Http\Controllers\Api\Frontend\FaqController;
 use App\Http\Controllers\Api\Frontend\HomeController;
+use App\Http\Controllers\Api\Frontend\MessController;
 use App\Http\Controllers\Api\Frontend\PageController;
 use App\Http\Controllers\Api\Frontend\SettingsController;
 use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubcategoryController;
+use App\Http\Controllers\Api\Frontend\TransactionController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PropertyController;
-use App\Http\Controllers\Api\FavouriteController;
-use App\Http\Controllers\Api\Frontend\MessController;
-use App\Http\Controllers\Api\Frontend\TransactionController;
+use Illuminate\Support\Facades\Route;
 
-//page
+// page
 Route::get('/page/home', [HomeController::class, 'index']);
 
 Route::get('/category', [CategoryController::class, 'index']);
@@ -35,8 +32,6 @@ Route::get('/social/links', [SocialLinksController::class, 'index']);
 Route::get('/settings', [SettingsController::class, 'index']);
 Route::get('/faq', [FaqController::class, 'index']);
 
-
-
 Route::get('dynamic/page', [PageController::class, 'index']);
 Route::get('dynamic/page/show/{slug}', [PageController::class, 'show']);
 
@@ -44,50 +39,34 @@ Route::get('/property-form-data', [PropertyController::class, 'getFormData']);
 
 Route::get('/location/list', [HomeController::class, 'divisions']);
 
-
-
-
 Route::middleware(['auth:api'])->controller(FavouriteController::class)->prefix('auth/property')->group(function () {
     Route::post('/favorite', 'toggleFavorite');
     Route::get('/favorite/list', 'favoritesList');
 });
 
-
-
-
-
-
-
 Route::group(['middleware' => 'guest:api'], function ($router) {
-    //register
+    // register
     Route::post('/register', [RegisterController::class, 'register']);
     Route::post('/verify/phone', [RegisterController::class, 'VerifyPhone'])->name('verify.phone');
     Route::post('/resend-otp', [RegisterController::class, 'ResendOtp']);
     Route::post('/verify-otp', [RegisterController::class, 'VerifyEmail']);
-    //login
+    // login
     Route::post('login', [LoginController::class, 'login'])->name('api.login');
-    //forgot password
+    // forgot password
     Route::post('/forget-password', [ResetPasswordController::class, 'forgotPassword']);
     Route::post('/otp-token', [ResetPasswordController::class, 'MakeOtpToken']);
     Route::post('/reset-password', [ResetPasswordController::class, 'ResetPassword']);
-    //social login
+    // social login
     Route::post('/social-login', [SocialLoginController::class, 'SocialLogin']);
 });
 
-
-
 Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
-
 
     Route::get('/refresh-token', [LoginController::class, 'refreshToken']);
     Route::post('/logout', [LogoutController::class, 'logout']);
 
-
-
     Route::get('/profile/information', [UserController::class, 'me']);
     Route::post('/update-profile', [UserController::class, 'updateProfile']);
-
-
 
     Route::post('/update-avatar', [UserController::class, 'updateAvatar']);
     Route::delete('/delete-profile', [UserController::class, 'destroy']);
@@ -101,10 +80,10 @@ Route::group(['middleware' => ['auth:api', 'api-otp']], function ($router) {
 */
 
 Route::middleware(['auth:api'])->controller(FirebaseTokenController::class)->prefix('firebase')->group(function () {
-    Route::get("test", "test");
-    Route::post("token/add", "store");
-    Route::post("token/get", "getToken");
-    Route::post("token/delete", "deleteToken");
+    Route::get('test', 'test');
+    Route::post('token/add', 'store');
+    Route::post('token/get', 'getToken');
+    Route::post('token/delete', 'deleteToken');
 });
 
 /*
@@ -142,23 +121,33 @@ Route::middleware(['auth:api'])->controller(ChatController::class)->prefix('auth
 
 Route::prefix('cms')->name('cms.')->group(function () {
     Route::get('home', [HomeController::class, 'index'])->name('home');
-    Route::get('about', [\App\Http\Controllers\Api\AboutController::class, 'index'])->name('about');
+    Route::get('about', [AboutController::class, 'index'])->name('about');
     Route::get('footer', [HomeController::class, 'footer'])->name('common');
 });
-
 
 // =====================
 // Mess Management Routes
 // =====================
-use App\Http\Controllers\Api\MemberController;
+use App\Http\Controllers\Api\AboutController;
+use App\Http\Controllers\Api\BazarScheduleController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepositController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\MealController;
-use App\Http\Controllers\Api\DashboardController;
-use App\Http\Controllers\Api\ReportController;
-use App\Http\Controllers\Api\BazarScheduleController;
-use App\Http\Controllers\Api\PollController;
+use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\NoticeController;
+use App\Http\Controllers\Api\PollController;
+use App\Http\Controllers\Api\ReportController;
+use App\Models\Mess;
+use App\Notifications\BazarAssignedNotification;
+use App\Notifications\BazarCostAddedNotification;
+use App\Notifications\MealCountUpdatedNotification;
+use App\Notifications\MoneyAddedNotification;
+use App\Notifications\MonthClosedNotification;
+use App\Notifications\NewMemberJoinedNotification;
+use App\Notifications\NewMonthStartedNotification;
+use App\Notifications\RolePromotedNotification;
+use Illuminate\Support\Facades\DB;
 
 Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
@@ -191,23 +180,23 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
     // ===== TEMPORARY: Seed Notifications =====
     Route::get('/seed-notifications', function () {
-        \Illuminate\Support\Facades\DB::table('notifications')->truncate();
-        
-        $mess = \App\Models\Mess::find(11);
-        if (!$mess) {
+        DB::table('notifications')->truncate();
+
+        $mess = Mess::find(11);
+        if (! $mess) {
             return response()->json(['message' => 'No mess found! Create a mess first.']);
         }
-        
-        $mess->notify(new \App\Notifications\MonthClosedNotification('July', 2026, 48.50));
-        $mess->notify(new \App\Notifications\NewMonthStartedNotification('August', 2026));
-        $mess->notify(new \App\Notifications\MoneyAddedNotification('Md Alamin', 2500));
-        $mess->notify(new \App\Notifications\BazarCostAddedNotification('Rony', 1200, 'Chicken, Rice, Vegetables'));
-        $mess->notify(new \App\Notifications\MealCountUpdatedNotification('2026-08-22', 'Rifat Rony', 2, 1));
-        $mess->notify(new \App\Notifications\BazarAssignedNotification('2026-08-23', 'Mehedi Hasan', 'Alamin'));
-        $mess->notify(new \App\Notifications\RolePromotedNotification('Rifat Rony'));
-        $mess->notify(new \App\Notifications\NewMemberJoinedNotification('Nahid Islam'));
-        
-        return response()->json(['message' => 'Dummy notifications seeded successfully for Mess ID: ' . $mess->id]);
+
+        $mess->notify(new MonthClosedNotification('July', 2026, 48.50));
+        $mess->notify(new NewMonthStartedNotification('August', 2026));
+        $mess->notify(new MoneyAddedNotification('Md Alamin', 2500));
+        $mess->notify(new BazarCostAddedNotification('Rony', 1200, 'Chicken, Rice, Vegetables'));
+        $mess->notify(new MealCountUpdatedNotification('2026-08-22', 'Rifat Rony', 2, 1));
+        $mess->notify(new BazarAssignedNotification('2026-08-23', 'Mehedi Hasan', 'Alamin'));
+        $mess->notify(new RolePromotedNotification('Rifat Rony'));
+        $mess->notify(new NewMemberJoinedNotification('Nahid Islam'));
+
+        return response()->json(['message' => 'Dummy notifications seeded successfully for Mess ID: '.$mess->id]);
     });
 
     // ===== Notifications =====
