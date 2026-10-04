@@ -27,17 +27,15 @@ class AppServiceProvider extends ServiceProvider
         $clientId       = config('services.apple.client_id');
         $teamId         = config('services.apple.team_id');
         $keyId          = config('services.apple.key_id');
-        $privateKeyPath = base_path(config('services.apple.private_key_path'));
+        $privateKeyPath = config('services.apple.private_key_path') ? base_path(config('services.apple.private_key_path')) : null;
 
-        if (! $clientId || ! $teamId || ! $keyId || ! file_exists($privateKeyPath)) {
-            \Log::warning("Apple login config missing. Skipping Apple JWT setup.");
+        if (! $clientId || ! $teamId || ! $keyId || ! $privateKeyPath || ! file_exists($privateKeyPath)) {
             return;
         }
 
         $privateKey = trim(file_get_contents($privateKeyPath));
 
         if (! $privateKey) {
-            \Log::warning("Apple private key empty. Skipping.");
             return;
         }
 
