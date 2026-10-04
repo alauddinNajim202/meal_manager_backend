@@ -39,7 +39,7 @@ class SocialLoginController extends Controller
 
         $request->validate([
             'token'         => 'required',
-            'provider'      => 'required|in:google,facebook,apple',
+            'provider'      => 'required|in:google,facebook',
         ]);
 
 
