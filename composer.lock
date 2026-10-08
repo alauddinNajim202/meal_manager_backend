@@ -3535,16 +3535,16 @@
         },
         {
             "name": "laravel/prompts",
-            "version": "v0.3.24",
+            "version": "v0.3.25",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/prompts.git",
-                "reference": "5d3cdef29e93ca3b62b1871359db3078cd99908b"
+                "reference": "21b7b49d60fcb700016dd27b582ae739c75de816"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/prompts/zipball/5d3cdef29e93ca3b62b1871359db3078cd99908b",
-                "reference": "5d3cdef29e93ca3b62b1871359db3078cd99908b",
+                "url": "https://api.github.com/repos/laravel/prompts/zipball/21b7b49d60fcb700016dd27b582ae739c75de816",
+                "reference": "21b7b49d60fcb700016dd27b582ae739c75de816",
                 "shasum": ""
             },
             "require": {
@@ -3587,10 +3587,9 @@
             ],
             "description": "Add beautiful and user-friendly forms to your command-line applications.",
             "support": {
-                "issues": "https://github.com/laravel/prompts/issues",
-                "source": "https://github.com/laravel/prompts/tree/v0.3.24"
+                "source": "https://github.com/laravel/prompts/tree/v0.3.25"
             },
-            "time": "2026-08-20T12:55:36+00:00"
+            "time": "2026-10-06T02:25:49+00:00"
         },
         {
             "name": "laravel/reverb",
@@ -13245,16 +13244,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "11.5.56",
+            "version": "11.5.57",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "5f83edffa6967c3db468d48a695ec7bcb02e9256"
+                "reference": "36b75bf56a8535623f5b3e24b27ea1823759da1a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/5f83edffa6967c3db468d48a695ec7bcb02e9256",
-                "reference": "5f83edffa6967c3db468d48a695ec7bcb02e9256",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/36b75bf56a8535623f5b3e24b27ea1823759da1a",
+                "reference": "36b75bf56a8535623f5b3e24b27ea1823759da1a",
                 "shasum": ""
             },
             "require": {
@@ -13264,7 +13263,7 @@
                 "ext-libxml": "*",
                 "ext-mbstring": "*",
                 "ext-xmlwriter": "*",
-                "myclabs/deep-copy": "^1.13.4",
+                "myclabs/deep-copy": "^1.14.0",
                 "phar-io/manifest": "^2.0.4",
                 "phar-io/version": "^3.2.1",
                 "php": ">=8.2",
@@ -13327,7 +13326,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.56"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.57"
             },
             "funding": [
                 {
@@ -13335,7 +13334,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2026-07-06T14:52:39+00:00"
+            "time": "2026-10-05T05:47:54+00:00"
         },
         {
             "name": "sebastian/cli-parser",
