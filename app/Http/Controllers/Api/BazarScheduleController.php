@@ -134,18 +134,27 @@ class BazarScheduleController extends Controller
                         ['mess_id' => $messId, 'date' => $item['date']],
                         ['user_id' => $item['user_id'], 'status' => $item['status'] ?? 'pending']
                     );
-                    
-                    $mess = \App\Models\Mess::find($messId);
-                    if ($mess) {
-                        $mess->notify(new \App\Notifications\BazarAssignedNotification($item['date'], $targetUser->name));
-                    }
-                    
-                    $results[] = $result;
+
+                    $results[] = [
+                        'schedule' => $result,
+                        'user_name' => $targetUser->name,
+                        'date' => $item['date']
+                    ];
                 }
                 return $results;
             });
 
-            return $this->success($saved, 'Bazar schedule created successfully');
+            // Send single batch notification after transaction completes
+            $mess = \App\Models\Mess::find($messId);
+            if ($mess && !empty($saved)) {
+                if (count($saved) === 1) {
+                    $mess->notify(new \App\Notifications\BazarAssignedNotification($saved[0]['date'], $saved[0]['user_name']));
+                } else {
+                    $mess->notify(new \App\Notifications\BazarAssignedNotification(now()->format('Y-m-d'), count($saved) . ' scheduled dates'));
+                }
+            }
+
+            return $this->success(array_column($saved, 'schedule'), 'Bazar schedule created successfully');
         } catch (\Exception $e) {
             $code = in_array($e->getCode(), [403, 404]) ? $e->getCode() : 500;
             return $this->error($e->getMessage(), $code === 500 ? 'Something went wrong' : $e->getMessage(), $code);

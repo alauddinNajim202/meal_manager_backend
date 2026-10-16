@@ -37,6 +37,7 @@ class Mess extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'mess_user')
+            ->withTrashed()
             ->withPivot('role', 'status')
             ->withTimestamps();
     }
@@ -47,6 +48,7 @@ class Mess extends Model
     public function managers()
     {
         return $this->belongsToMany(User::class, 'mess_user')
+            ->withTrashed()
             ->wherePivot('role', 'manager')
             ->withPivot('role', 'status')
             ->withTimestamps();
@@ -58,6 +60,7 @@ class Mess extends Model
     public function members()
     {
         return $this->belongsToMany(User::class, 'mess_user')
+            ->withTrashed()
             ->wherePivot('role', 'member')
             ->withPivot('role', 'status')
             ->withTimestamps();

@@ -15,6 +15,19 @@ class Notice extends Model
 
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by')->withTrashed();
+    }
+
+    public function reactions()
+    {
+        return $this->hasMany(NoticeReaction::class);
+    }
+
+    public function reactedUsers()
+    {
+        return $this->belongsToMany(User::class, 'notice_reactions')
+            ->withTrashed()
+            ->withPivot('reaction', 'created_at')
+            ->withTimestamps();
     }
 }

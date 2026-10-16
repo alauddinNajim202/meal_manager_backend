@@ -26,9 +26,25 @@ class NoticeController extends Controller
         }
 
         $notices = Notice::where('mess_id', $messId)
-            ->with('creator:id,name,avatar')
+            ->with(['creator:id,name,avatar', 'reactions.user:id,name,avatar'])
+            ->withCount('reactions')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($notice) use ($user) {
+                $hasReacted = $notice->reactions->where('user_id', $user->id)->first();
+                $notice->has_reacted = (bool) $hasReacted;
+                $notice->my_reaction = $hasReacted?->reaction;
+                $notice->reacted_users = $notice->reactions->map(function ($r) {
+                    return [
+                        'user_id'    => $r->user_id,
+                        'name'       => $r->user?->name,
+                        'avatar'     => $r->user?->avatar ? url($r->user->avatar) : null,
+                        'reaction'   => $r->reaction,
+                        'created_at' => $r->created_at,
+                    ];
+                })->values();
+                return $notice;
+            });
 
         return $this->success($notices, 'Notices fetched successfully.', 200);
     }
@@ -119,5 +135,57 @@ class NoticeController extends Controller
         } catch (Exception $e) {
             return $this->error(null, $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * React / acknowledge a notice (all mess members).
+     */
+    public function toggleReact(Request $request, $id)
+    {
+        $user = auth('api')->user();
+        $messId = $user->current_mess_id;
+
+        if (!$messId) {
+            return $this->error(null, 'No active mess selected.', 400);
+        }
+
+        $notice = Notice::where('id', $id)->where('mess_id', $messId)->first();
+        if (!$notice) {
+            return $this->error(null, 'Notice not found.', 404);
+        }
+
+        $reactionType = $request->reaction ?? 'like';
+
+        $existing = \App\Models\NoticeReaction::where('notice_id', $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            if ($existing->reaction === $reactionType && !$request->has('force')) {
+                $existing->delete();
+                $reacted = false;
+                $msg = 'Reaction removed successfully.';
+            } else {
+                $existing->update(['reaction' => $reactionType]);
+                $reacted = true;
+                $msg = 'Reaction updated successfully.';
+            }
+        } else {
+            \App\Models\NoticeReaction::create([
+                'notice_id' => $id,
+                'user_id'   => $user->id,
+                'reaction'  => $reactionType,
+            ]);
+            $reacted = true;
+            $msg = 'Reaction added successfully.';
+        }
+
+        $count = \App\Models\NoticeReaction::where('notice_id', $id)->count();
+
+        return $this->success([
+            'notice_id'       => (int) $id,
+            'has_reacted'     => $reacted,
+            'reactions_count' => $count,
+        ], $msg, 200);
     }
 }

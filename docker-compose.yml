@@ -13,6 +13,7 @@ services:
       - ./.env:/var/www/html/.env
       - ./storage/app/public:/var/www/html/storage/app/public
       - ./storage/logs:/var/www/html/storage/logs
+      - ./public/uploads:/var/www/html/public/uploads
     depends_on:
       - db
     networks:

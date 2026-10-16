@@ -350,7 +350,8 @@ class MemberController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'required_without:member_id|nullable|exists:users,id',
+            'member_id' => 'required_without:user_id|nullable|exists:users,id',
         ]);
 
         if ($validator->fails()) {
@@ -359,7 +360,8 @@ class MemberController extends Controller
 
         try {
             $messId = $authUser->current_mess_id;
-            $member = User::find($request->user_id);
+            $targetUserId = $request->user_id ?? $request->member_id;
+            $member = User::find($targetUserId);
 
             if (!$member) {
                 return $this->error(null, 'Member not found.', 404);
@@ -381,7 +383,22 @@ class MemberController extends Controller
                 return $this->error(null, 'You cannot remove yourself.', 400);
             }
 
-            // Detach from pivot table (account remains intact)
+            // Check if member has meals or deposits in current ongoing month
+            $now = now();
+            $hasOngoingRecords = \App\Models\Meal::where('mess_id', $messId)->where('user_id', $member->id)
+                ->whereMonth('date', $now->month)->whereYear('date', $now->year)->exists()
+                || \App\Models\Deposit::where('mess_id', $messId)->where('user_id', $member->id)
+                ->whereMonth('date', $now->month)->whereYear('date', $now->year)->exists();
+
+            if ($hasOngoingRecords) {
+                $member->messes()->updateExistingPivot($messId, ['status' => 'inactive']);
+                return $this->success([
+                    'status' => 'inactive',
+                    'is_detached' => false
+                ], 'Member has meals/deposits in current month. Status set to inactive to preserve calculations until month-end settlement.', 200);
+            }
+
+            // Detach from pivot table if no current unfinalized records
             $member->messes()->detach($messId);
 
             // If this was their active mess, clear it
@@ -390,7 +407,7 @@ class MemberController extends Controller
                 $member->update(['current_mess_id' => $nextMess?->id]);
             }
 
-            return $this->success(null, 'Member removed from mess successfully.', 200);
+            return $this->success(['status' => 'removed', 'is_detached' => true], 'Member removed from mess successfully.', 200);
 
         } catch (Exception $e) {
             return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
@@ -399,7 +416,7 @@ class MemberController extends Controller
     
     /**
      * Remove a member from the current active mess.
-     * Does NOT delete their account, just detaches from the pivot table.
+     * Does NOT delete their account, just detaches or sets inactive if has ongoing month records.
      */
     public function destroy($id)
     {
@@ -429,6 +446,21 @@ class MemberController extends Controller
                 return $this->error(null, 'You cannot remove yourself. Use Leave Mess instead.', 400);
             }
 
+            // Check if member has meals or deposits in current ongoing month
+            $now = now();
+            $hasOngoingRecords = \App\Models\Meal::where('mess_id', $messId)->where('user_id', $member->id)
+                ->whereMonth('date', $now->month)->whereYear('date', $now->year)->exists()
+                || \App\Models\Deposit::where('mess_id', $messId)->where('user_id', $member->id)
+                ->whereMonth('date', $now->month)->whereYear('date', $now->year)->exists();
+
+            if ($hasOngoingRecords) {
+                $member->messes()->updateExistingPivot($messId, ['status' => 'inactive']);
+                return $this->success([
+                    'status' => 'inactive',
+                    'is_detached' => false
+                ], 'Member has meals/deposits in current month. Status set to inactive to preserve calculations until month-end settlement.', 200);
+            }
+
             // Detach from pivot table (account remains intact)
             $member->messes()->detach($messId);
 
@@ -438,7 +470,54 @@ class MemberController extends Controller
                 $member->update(['current_mess_id' => $nextMess?->id]);
             }
 
-            return $this->success(null, 'Member removed from mess successfully.', 200);
+            return $this->success(['status' => 'removed', 'is_detached' => true], 'Member removed from mess successfully.', 200);
+
+        } catch (Exception $e) {
+            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+        }
+    }
+
+    /**
+     * Toggle or update member status (active / inactive).
+     */
+    public function updateStatus(Request $request)
+    {
+        $authUser = auth()->user();
+
+        if (!$this->isManagerOfCurrentMess($authUser)) {
+            return $this->error(null, 'Only managers can update member status.', 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required_without:member_id|nullable|exists:users,id',
+            'member_id' => 'required_without:user_id|nullable|exists:users,id',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
+
+        try {
+            $messId = $authUser->current_mess_id;
+            $targetUserId = $request->user_id ?? $request->member_id;
+            $member = User::find($targetUserId);
+
+            if (!$member) {
+                return $this->error(null, 'Member not found.', 404);
+            }
+
+            $belongsToMess = $member->messes()->where('mess_id', $messId)->exists();
+            if (!$belongsToMess) {
+                return $this->error(null, 'This user is not a member of your mess.', 404);
+            }
+
+            $member->messes()->updateExistingPivot($messId, ['status' => $request->status]);
+
+            return $this->success([
+                'user_id' => $member->id,
+                'status' => $request->status,
+            ], "Member status updated to '{$request->status}' successfully.", 200);
 
         } catch (Exception $e) {
             return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
@@ -452,13 +531,14 @@ class MemberController extends Controller
     {
         $authUser = auth()->user();
 
-        if (!$this->isOwnerOfCurrentMess($authUser)) {
-            return $this->error(null, 'Only the mess owner can change roles.', 403);
+        if (!$this->isManagerOfCurrentMess($authUser)) {
+            return $this->error(null, 'Only mess managers or owners can change roles.', 403);
         }
 
         $validator = Validator::make($request->all(), [
             'role' => 'required|in:manager,member',
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'required_without:member_id|nullable|exists:users,id',
+            'member_id' => 'required_without:user_id|nullable|exists:users,id',
         ]);
 
         if ($validator->fails()) {
@@ -467,7 +547,8 @@ class MemberController extends Controller
 
         try {
             $messId = $authUser->current_mess_id;
-            $member = User::find($request->user_id);
+            $targetUserId = $request->user_id ?? $request->member_id;
+            $member = User::find($targetUserId);
 
             if (!$member) {
                 return $this->error(null, 'Member not found.', 404);

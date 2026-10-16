@@ -127,6 +127,21 @@ class MealController extends Controller
         try {
             $messId = $user->current_mess_id;
 
+            $dateObj = \Carbon\Carbon::parse($request->date);
+            $isFinalized = \App\Models\MonthlyReport::where('mess_id', $messId)
+                ->where('month', $dateObj->month)
+                ->where('year', $dateObj->year)
+                ->where('status', 'finalized')
+                ->exists();
+
+            if ($isFinalized) {
+                return $this->error(
+                    null,
+                    "Cannot save meals for date {$request->date}. The month ({$dateObj->format('F Y')}) is already closed/finalized.",
+                    422
+                );
+            }
+
             $savedMeals = [];
             $mealDetails = [];
 
@@ -199,6 +214,91 @@ class MealController extends Controller
                 $e->getMessage(),
                 500
             );
+        }
+    }
+
+    /**
+     * Update meals for a single member across multiple dates.
+     * Allowed only if the corresponding month is not closed.
+     */
+    public function updateMemberMeals(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->current_mess_id) {
+            return $this->error(null, 'No active mess selected.', 400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'user_id'          => 'required_without:member_id|nullable|exists:users,id',
+            'member_id'        => 'required_without:user_id|nullable|exists:users,id',
+            'meals'            => 'required|array|min:1',
+            'meals.*.date'      => 'required|date',
+            'meals.*.breakfast' => 'required|numeric|min:0',
+            'meals.*.lunch'     => 'required|numeric|min:0',
+            'meals.*.dinner'    => 'required|numeric|min:0',
+            'meals.*.is_guest'  => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first(), 'Validation failed', 422);
+        }
+
+        try {
+            $messId = $user->current_mess_id;
+            $targetUserId = $request->user_id ?? $request->member_id;
+            $targetUser = User::find($targetUserId);
+
+            if (!$targetUser) {
+                return $this->error(null, 'Member not found.', 404);
+            }
+
+            // Verify member belongs to this mess
+            $belongsToMess = $targetUser->messes()->where('mess_id', $messId)->exists();
+            if (!$belongsToMess) {
+                return $this->error(null, 'This user does not belong to your mess.', 403);
+            }
+
+            // Verify each date's month is not finalized
+            foreach ($request->meals as $m) {
+                $dateObj = \Carbon\Carbon::parse($m['date']);
+                $isFinalized = \App\Models\MonthlyReport::where('mess_id', $messId)
+                    ->where('month', $dateObj->month)
+                    ->where('year', $dateObj->year)
+                    ->where('status', 'finalized')
+                    ->exists();
+
+                if ($isFinalized) {
+                    return $this->error(
+                        null,
+                        "Cannot update meal for date {$m['date']}. The month ({$dateObj->format('F Y')}) is already closed/finalized.",
+                        422
+                    );
+                }
+            }
+
+            $savedMeals = [];
+            foreach ($request->meals as $m) {
+                $saved = Meal::updateOrCreate(
+                    [
+                        'user_id' => $targetUserId,
+                        'mess_id' => $messId,
+                        'date'    => $m['date'],
+                    ],
+                    [
+                        'breakfast' => $m['breakfast'],
+                        'lunch'     => $m['lunch'],
+                        'dinner'    => $m['dinner'],
+                        'is_guest'  => $m['is_guest'] ?? false,
+                    ]
+                );
+                $savedMeals[] = $saved;
+            }
+
+            return $this->success($savedMeals, "Meals for {$targetUser->name} updated successfully across " . count($savedMeals) . ' dates.', 200);
+
+        } catch (Exception $e) {
+            return $this->error(null, $e->getMessage(), 500);
         }
     }
 

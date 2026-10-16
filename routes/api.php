@@ -1,12 +1,17 @@
 <?php
 
+use App\Http\Controllers\Api\AboutController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\Auth\SocialLoginController;
 use App\Http\Controllers\Api\Auth\UserController;
+use App\Http\Controllers\Api\BazarScheduleController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DepositController;
+use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\FavouriteController;
 use App\Http\Controllers\Api\FirebaseTokenController;
 use App\Http\Controllers\Api\Frontend\CategoryController;
@@ -18,8 +23,23 @@ use App\Http\Controllers\Api\Frontend\SettingsController;
 use App\Http\Controllers\Api\Frontend\SocialLinksController;
 use App\Http\Controllers\Api\Frontend\SubcategoryController;
 use App\Http\Controllers\Api\Frontend\TransactionController;
+use App\Http\Controllers\Api\MealController;
+use App\Http\Controllers\Api\MemberController;
+use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PollController;
 use App\Http\Controllers\Api\PropertyController;
+use App\Http\Controllers\Api\ReportController;
+use App\Models\Mess;
+use App\Notifications\BazarAssignedNotification;
+use App\Notifications\BazarCostAddedNotification;
+use App\Notifications\MealCountUpdatedNotification;
+use App\Notifications\MoneyAddedNotification;
+use App\Notifications\MonthClosedNotification;
+use App\Notifications\NewMemberJoinedNotification;
+use App\Notifications\NewMonthStartedNotification;
+use App\Notifications\RolePromotedNotification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 // page
@@ -128,26 +148,6 @@ Route::prefix('cms')->name('cms.')->group(function () {
 // =====================
 // Mess Management Routes
 // =====================
-use App\Http\Controllers\Api\AboutController;
-use App\Http\Controllers\Api\BazarScheduleController;
-use App\Http\Controllers\Api\DashboardController;
-use App\Http\Controllers\Api\DepositController;
-use App\Http\Controllers\Api\ExpenseController;
-use App\Http\Controllers\Api\MealController;
-use App\Http\Controllers\Api\MemberController;
-use App\Http\Controllers\Api\NoticeController;
-use App\Http\Controllers\Api\PollController;
-use App\Http\Controllers\Api\ReportController;
-use App\Models\Mess;
-use App\Notifications\BazarAssignedNotification;
-use App\Notifications\BazarCostAddedNotification;
-use App\Notifications\MealCountUpdatedNotification;
-use App\Notifications\MoneyAddedNotification;
-use App\Notifications\MonthClosedNotification;
-use App\Notifications\NewMemberJoinedNotification;
-use App\Notifications\NewMonthStartedNotification;
-use App\Notifications\RolePromotedNotification;
-use Illuminate\Support\Facades\DB;
 
 Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
@@ -168,6 +168,7 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::get('/bazar-schedule/list', [BazarScheduleController::class, 'index']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/reports', [ReportController::class, 'index']);
+    Route::get('/reports/last-month', [ReportController::class, 'lastMonth']);
     Route::get('/reports/my-bill', [ReportController::class, 'myBill']);
     Route::get('/transactions', [TransactionController::class, 'index']);
 
@@ -177,6 +178,7 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
     // ===== Notices (Members + Managers) =====
     Route::get('/notices/list', [NoticeController::class, 'index']);
+    Route::post('/notices/{id}/react', [NoticeController::class, 'toggleReact']);
 
     // ===== TEMPORARY: Seed Notifications =====
     Route::get('/seed-notifications', function () {
@@ -208,8 +210,9 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
     Route::middleware(['mess.manager'])->group(function () {
         // Members
         Route::post('/members/store', [MemberController::class, 'store']);
-        Route::delete('/members/{id}', [MemberController::class, 'destroy']);
-        Route::patch('/members/role/promote', [MemberController::class, 'changeRole']);
+        Route::match(['patch', 'post'], '/members/role/promote', [MemberController::class, 'changeRole']);
+        // member status (active/inactive)
+        Route::post('/members/status', [MemberController::class, 'updateStatus']);
         // remove member
         Route::post('/members/remove', [MemberController::class, 'remove']);
 
@@ -223,6 +226,7 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
         // Meals
         Route::post('/meals/store', [MealController::class, 'store']);
+        Route::post('/meals/member/update', [MealController::class, 'updateMemberMeals']);
         Route::delete('/meals/{id}', [MealController::class, 'destroy']);
 
         // Bazar Schedule
@@ -232,6 +236,7 @@ Route::middleware(['auth:api'])->prefix('mess')->group(function () {
 
         // Reports
         Route::post('/reports/generate', [ReportController::class, 'generate']);
+        Route::post('/reports/carry-forward', [ReportController::class, 'carryForward']);
 
         // Polls (Managers only)
         Route::post('/polls/store', [PollController::class, 'store']);

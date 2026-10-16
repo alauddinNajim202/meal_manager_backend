@@ -34,24 +34,33 @@ class UserController extends Controller
         $user = auth('api')->user();
 
         try {
+            DB::beginTransaction();
+
             // Validate the request
             $validatedData = $request->validate([
-
-                'name'                            => 'nullable|string|max:255',
-                'phone'                           => 'nullable|string|max:255',
-                // 'address'                         => 'nullable|string|max:255',
-                'avatar'                          => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
-
+                'name'    => 'nullable|string|max:255',
+                'phone'   => 'nullable|string|max:255',
+                'email'   => 'nullable|email|unique:users,email,' . $user->id,
+                'avatar'  => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             ]);
 
+            $updateData = [];
+            if ($request->has('name') && $request->filled('name')) {
+                $updateData['name'] = $request->input('name');
+            }
+            if ($request->has('phone') && $request->filled('phone')) {
+                $updateData['phone'] = $request->input('phone');
+            }
+            if ($request->has('email') && $request->filled('email')) {
+                $updateData['email'] = $request->input('email');
+            }
+            if ($request->has('address')) {
+                $updateData['address'] = $request->input('address');
+            }
 
-            $user->update([
-                'name'                     => $request->input('name') ?? $user->name,
-                'phone'                    => $request->input('phone') ?? $user->phone,
-                'address'                  => $request->input('address') ?? $user->address,
-            ]);
-
-
+            if (!empty($updateData)) {
+                $user->update($updateData);
+            }
 
             if ($request->hasFile('avatar')) {
                 if ($user->avatar) {
@@ -62,19 +71,23 @@ class UserController extends Controller
                     'user/avatar',
                     getFileName($request->file('avatar'))
                 );
+                $user->save();
             }
 
-            // Save the user
-            $user->save();
+            DB::commit();
 
             $data = User::select($this->select)->find($user->id);
             return Helper::jsonResponse(true, 'Profile updated successfully', 200, $data);
         } catch (ValidationException $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
 
             return Helper::jsonErrorResponse($e->errors(), 422, $e->getMessage());
         } catch (Throwable $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
 
             return Helper::jsonErrorResponse(
                 config('app.debug') ? $e->getMessage() : 'Internal server error',
