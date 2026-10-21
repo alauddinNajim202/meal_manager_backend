@@ -18,11 +18,13 @@ trait ApiResponse
 
     public function error($data , $message=null , $code =500)
     {
+        $statusCode = (is_numeric($code) && (int)$code >= 100 && (int)$code <= 599) ? (int)$code : 500;
+
         return response()->json([
             'status' => false ,
             'message' => $message ,
             'data' => $data ,
-            'code' => $code
-        ],$code);
+            'code' => $statusCode
+        ], $statusCode);
     }
 }

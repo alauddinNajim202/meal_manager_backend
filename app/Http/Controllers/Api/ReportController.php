@@ -93,15 +93,15 @@ class ReportController extends Controller
         }
 
         try {
-            $messId = $user->current_mess_id;
-            $month  = $request->month;
-            $year   = $request->year;
+            $messId = (int) $user->current_mess_id;
+            $month  = (int) $request->month;
+            $year   = (int) $request->year;
 
             // Collect all meals for this month
             $allMeals   = Meal::where('mess_id', $messId)->whereMonth('date', $month)->whereYear('date', $year)->get();
-            $totalMeals = $allMeals->sum('breakfast') + $allMeals->sum('lunch') + $allMeals->sum('dinner');
+            $totalMeals = (float) ($allMeals->sum('breakfast') + $allMeals->sum('lunch') + $allMeals->sum('dinner'));
 
-            $totalCost = Expense::where('mess_id', $messId)->whereMonth('date', $month)->whereYear('date', $year)->sum('amount');
+            $totalCost = (float) Expense::where('mess_id', $messId)->whereMonth('date', $month)->whereYear('date', $year)->sum('amount');
 
             $mealRate = $totalMeals > 0 ? round($totalCost / $totalMeals, 4) : 0;
 
@@ -115,9 +115,9 @@ class ReportController extends Controller
 
             foreach ($members as $member) {
                 $memberMeals    = $allMeals->where('user_id', $member->id);
-                $userTotalMeals = $memberMeals->sum('breakfast') + $memberMeals->sum('lunch') + $memberMeals->sum('dinner');
+                $userTotalMeals = (float) ($memberMeals->sum('breakfast') + $memberMeals->sum('lunch') + $memberMeals->sum('dinner'));
                 $userTotalCost  = round($userTotalMeals * $mealRate, 2);
-                $userDeposit    = Deposit::where('mess_id', $messId)->where('user_id', $member->id)
+                $userDeposit    = (float) Deposit::where('mess_id', $messId)->where('user_id', $member->id)
                     ->whereMonth('date', $month)->whereYear('date', $year)->sum('amount');
                 $balance = round($userDeposit - $userTotalCost, 2);
 
@@ -128,10 +128,11 @@ class ReportController extends Controller
             }
             
             // Dispatch notifications to the mess
-            $monthName = \Carbon\Carbon::create()->month($month)->format('F');
-            $nextMonthDate = \Carbon\Carbon::createFromDate($year, $month, 1)->addMonth();
+            $monthDate = \Carbon\Carbon::createFromDate($year, $month, 1);
+            $monthName = $monthDate->format('F');
+            $nextMonthDate = (clone $monthDate)->addMonth();
             $nextMonthName = $nextMonthDate->format('F');
-            $nextMonthYear = $nextMonthDate->format('Y');
+            $nextMonthYear = (int) $nextMonthDate->format('Y');
 
             $mess = \App\Models\Mess::find($messId);
             if ($mess) {
@@ -142,7 +143,7 @@ class ReportController extends Controller
             return $this->success($report->load('userMonthlyBills.user:id,name'), 'Report generated successfully', 200);
 
         } catch (Exception $e) {
-            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+            return $this->error(null, $e->getMessage(), 500);
         }
     }
 
@@ -157,13 +158,13 @@ class ReportController extends Controller
             return $this->error(null, 'No active mess selected.', 400);
         }
 
-        $messId = $user->current_mess_id;
-        $currentMonth = $request->month ?? now()->month;
-        $currentYear  = $request->year ?? now()->year;
+        $messId = (int) $user->current_mess_id;
+        $currentMonth = (int) ($request->month ?? now()->month);
+        $currentYear  = (int) ($request->year ?? now()->year);
 
         $lastMonthDate = \Carbon\Carbon::createFromDate($currentYear, $currentMonth, 1)->subMonth();
-        $targetMonth = $lastMonthDate->month;
-        $targetYear  = $lastMonthDate->year;
+        $targetMonth = (int) $lastMonthDate->month;
+        $targetYear  = (int) $lastMonthDate->year;
 
         $report = MonthlyReport::where('mess_id', $messId)
             ->where('month', $targetMonth)
@@ -247,7 +248,7 @@ class ReportController extends Controller
             return $this->error(null, 'From month report has not been finalized yet.', 404);
         }
 
-        $toStartDate = \Carbon\Carbon::createFromDate($request->to_year, $request->to_month, 1)->format('Y-m-d');
+        $toStartDate = \Carbon\Carbon::createFromDate((int) $request->to_year, (int) $request->to_month, 1)->format('Y-m-d');
         $passedCount = 0;
 
         foreach ($report->userMonthlyBills as $bill) {

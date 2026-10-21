@@ -22,8 +22,8 @@ class BazarScheduleController extends Controller
             return $this->error(null, 'No active mess selected.', 400);
         }
         
-        $month = $request->input('month', date('m'));
-        $year = $request->input('year', date('Y'));
+        $month = (int) $request->input('month', date('m'));
+        $year = (int) $request->input('year', date('Y'));
         
         $mess = \App\Models\Mess::with('users:id,name')->find($user->current_mess_id);
         if (!$mess) {
