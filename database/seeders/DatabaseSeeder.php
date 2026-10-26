@@ -19,5 +19,6 @@ class DatabaseSeeder extends Seeder
         $this->call(LocationSeeder::class);
         $this->call(FacilitySeeder::class);
         $this->call(MonthSeeder::class);
+        $this->call(PageSeeder::class);
     }
 }

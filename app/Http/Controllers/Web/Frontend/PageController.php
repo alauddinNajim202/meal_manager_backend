@@ -25,9 +25,17 @@ class PageController extends Controller
         $privacy = Page::where('slug', 'privacy-policy')
             ->where('status', 'active')
             ->first();
-  
 
         return view('frontend.default.privacy_policy', compact('privacy'));
+    }
+
+    public function termsAndConditions()
+    {
+        $terms = Page::whereIn('slug', ['terms-and-conditions', 'terms-of-service', 'terms'])
+            ->where('status', 'active')
+            ->first();
+
+        return view('frontend.default.terms_and_conditions', compact('terms'));
     }
 
 
