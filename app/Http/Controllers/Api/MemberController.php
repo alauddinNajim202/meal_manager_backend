@@ -536,9 +536,10 @@ class MemberController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'role' => 'required|in:manager,member',
-            'user_id' => 'required_without:member_id|nullable|exists:users,id',
-            'member_id' => 'required_without:user_id|nullable|exists:users,id',
+            'role'      => 'nullable|in:manager,member',
+            'user_id'   => 'required_without_all:member_id,id|nullable|exists:users,id',
+            'member_id' => 'required_without_all:user_id,id|nullable|exists:users,id',
+            'id'        => 'required_without_all:user_id,member_id|nullable|exists:users,id',
         ]);
 
         if ($validator->fails()) {
@@ -547,7 +548,7 @@ class MemberController extends Controller
 
         try {
             $messId = $authUser->current_mess_id;
-            $targetUserId = $request->user_id ?? $request->member_id;
+            $targetUserId = $request->user_id ?? $request->member_id ?? $request->id;
             $member = User::find($targetUserId);
 
             if (!$member) {
@@ -565,8 +566,11 @@ class MemberController extends Controller
                 return $this->error(null, 'You cannot change the role of an owner.', 403);
             }
 
+            // Default role to 'manager' if not explicitly provided
+            $role = $request->input('role', 'manager');
+
             // If promoting to manager, demote existing managers in this mess first (1 Manager rule)
-            if ($request->role === 'manager') {
+            if ($role === 'manager') {
                 $managerIdsInMess = DB::table('mess_user')
                     ->where('mess_id', $messId)
                     ->where('role', 'manager')
@@ -585,22 +589,22 @@ class MemberController extends Controller
             }
 
             // Update the pivot table role for the specific user
-            $member->messes()->updateExistingPivot($messId, ['role' => $request->role]);
+            $member->messes()->updateExistingPivot($messId, ['role' => $role]);
             
             // Update the users table role
-            $member->update(['role' => $request->role]);
+            $member->update(['role' => $role]);
 
-            if ($request->role === 'manager') {
+            if ($role === 'manager') {
                 $mess = \App\Models\Mess::find($messId);
                 if ($mess) {
                     $mess->notify(new \App\Notifications\RolePromotedNotification($member->name));
                 }
             }
 
-            return $this->success(null, "Role updated to '{$request->role}' successfully.", 200);
+            return $this->success(null, "Role updated to '{$role}' successfully.", 200);
 
         } catch (Exception $e) {
-            return $this->error(null, $e->getMessage(), $e->getCode() ?: 500);
+            return $this->error(null, $e->getMessage(), 500);
         }
     }
 
