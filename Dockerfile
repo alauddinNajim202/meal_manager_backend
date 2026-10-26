@@ -42,9 +42,13 @@ COPY . /var/www/html
 # Install Laravel dependencies
 RUN composer install --optimize-autoloader --no-dev
 
-# Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# PHP configuration for file uploads
+RUN echo "upload_max_filesize = 25M\npost_max_size = 30M\nmemory_limit = 256M" > /usr/local/etc/php/conf.d/uploads.ini
+
+# Set permissions for Laravel and public uploads
+RUN mkdir -p /var/www/html/public/uploads /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/uploads
+RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/uploads
 
 # Expose port 80
 EXPOSE 80
