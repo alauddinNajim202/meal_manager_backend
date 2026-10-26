@@ -13,26 +13,45 @@ use Kreait\Firebase\Messaging\Notification;
 class Helper
 {
     //! File or Image Upload
-    public static function fileUpload($file, string $folder, string $name): ?string
+    public static function fileUpload($file, string $folder, string $name = ''): ?string
     {
-        if (!$file->isValid()) {
+        if (!$file || !is_object($file) || !method_exists($file, 'isValid') || !$file->isValid()) {
+            Log::error("Helper::fileUpload - Uploaded file is invalid or null: " . ($file ? $file->getErrorMessage() : 'null'));
             return null;
         }
 
-        $imageName = time() . '-' . Str::random(8) . '.' . $file->getClientOriginalExtension();
-        $path      = public_path('uploads/' . $folder);
+        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+        $imageName = time() . '-' . Str::random(10) . '.' . $extension;
+        $path      = public_path('uploads/' . trim($folder, '/'));
+
         if (!file_exists($path)) {
-            mkdir($path, 0755, true);
+            if (!@mkdir($path, 0777, true) && !is_dir($path)) {
+                Log::error("Helper::fileUpload - Could not create directory: {$path}. Check write permissions.");
+                throw new Exception("Unable to create directory [{$path}]. Please check write permissions on public/uploads.");
+            }
         }
+
+        @chmod($path, 0777);
+
         $file->move($path, $imageName);
-        return 'uploads/' . $folder . '/' . $imageName;
+
+        return 'uploads/' . trim($folder, '/') . '/' . $imageName;
     }
 
     //! File or Image Delete
-    public static function fileDelete(string $path): void
+    public static function fileDelete(?string $path): void
     {
-        if (file_exists($path)) {
-            unlink($path);
+        if (empty($path)) {
+            return;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            $parsed = parse_url($path, PHP_URL_PATH);
+            $path = public_path(ltrim($parsed, '/'));
+        }
+
+        if (file_exists($path) && is_file($path)) {
+            @unlink($path);
         }
     }
 

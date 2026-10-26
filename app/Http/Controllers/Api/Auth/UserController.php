@@ -89,8 +89,9 @@ class UserController extends Controller
                 DB::rollBack();
             }
 
+            \Illuminate\Support\Facades\Log::error('Profile update failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return Helper::jsonErrorResponse(
-                config('app.debug') ? $e->getMessage() : 'Internal server error',
+                $e->getMessage(),
                 500
             );
         }
@@ -159,8 +160,9 @@ class UserController extends Controller
         } catch (ValidationException $e) {
             return Helper::jsonErrorResponse($e->errors(), 422);
         } catch (Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Avatar update failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return Helper::jsonErrorResponse(
-                config('app.debug') ? $e->getMessage() : 'Internal server error',
+                $e->getMessage(),
                 500
             );
         }
@@ -201,8 +203,9 @@ class UserController extends Controller
         } catch (ValidationException $e) {
             return Helper::jsonErrorResponse($e->errors(), 422);
         } catch (Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Cover update failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return Helper::jsonErrorResponse(
-                config('app.debug') ? $e->getMessage() : 'Internal server error',
+                $e->getMessage(),
                 500
             );
         }

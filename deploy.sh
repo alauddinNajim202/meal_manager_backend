@@ -10,10 +10,12 @@ mkdir -p releases/$RELEASE_NAME
 cp -r $BUILD_SOURCESDIRECTORY/* releases/$RELEASE_NAME/
 
 mkdir -p shared/uploads
+chmod -R 777 shared/uploads
 ln -sfn shared/.env releases/$RELEASE_NAME/.env
 ln -sfn shared/storage releases/$RELEASE_NAME/storage
 mkdir -p releases/$RELEASE_NAME/public
 ln -sfn $BASE_PATH/shared/uploads releases/$RELEASE_NAME/public/uploads
+chmod -R 777 releases/$RELEASE_NAME/storage
 
 cd releases/$RELEASE_NAME
 
